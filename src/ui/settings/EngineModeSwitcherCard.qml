@@ -1,0 +1,249 @@
+pragma ComponentBehavior: Bound
+import QtQuick
+import QtQuick.Layouts
+import QTranscribe
+import "../controls"
+
+PreferenceCard {
+    id: root
+
+    title: qsTr("Transcription Engine")
+    description: qsTr("Select between fast Cloud-based AI transcription and private On-Device inference")
+
+    RowLayout {
+        Layout.fillWidth: true
+        spacing: Theme.spacingMd
+
+        Rectangle {
+            id: cloudOptionCard
+            Layout.fillWidth: true
+            Layout.preferredHeight: cloudContent.implicitHeight + (Theme.spacingMd * 2)
+            radius: Theme.radiusMd
+            color: isSelected ? Theme.selectedBg : (cloudMouse.containsMouse ? Theme.cardBgElevated :
+                                                                               Theme.cardBgSubtle)
+
+            border.color: isSelected ? Theme.accentColor : (cloudMouse.containsMouse ? Theme.cardBorderHover :
+                                                                                       Theme.cardBorder)
+            border.width: isSelected ? 2 : 1
+
+            readonly property bool isSelected: SpeechController.activeBackend
+                                               === SpeechController.TranscriptionBackend.Groq
+
+            Behavior on color {
+                ColorAnimation {
+                    duration: Theme.animFast
+                }
+            }
+            Behavior on border.color {
+                ColorAnimation {
+                    duration: Theme.animFast
+                }
+            }
+
+            ColumnLayout {
+                id: cloudContent
+                anchors.fill: parent
+                anchors.margins: Theme.spacingMd
+                spacing: Theme.spacingSm
+
+                RowLayout {
+                    Layout.fillWidth: true
+                    spacing: Theme.spacingSm
+
+                    Rectangle {
+                        implicitWidth: 32
+                        implicitHeight: 32
+                        radius: Theme.radiusSm
+                        color: cloudOptionCard.isSelected ? Theme.sidebarItemSelected : Theme.controlBg
+
+                        StyledIcon {
+                            anchors.centerIn: parent
+                            source: "qrc:/qt/qml/QTranscribe/assets/icons/sparkles.svg"
+                            size: 16
+                            color: cloudOptionCard.isSelected ? Theme.accentColor : Theme.textSecondary
+                        }
+                    }
+
+                    ColumnLayout {
+                        Layout.fillWidth: true
+                        spacing: 1
+
+                        StyledText {
+                            text: qsTr("Cloud Transcription")
+                            variant: "body"
+                            customWeight: Font.DemiBold
+                        }
+
+                        StyledText {
+                            text: qsTr("Groq Cloud Whisper")
+                            variant: "caption"
+                            colorRole: "secondary"
+                        }
+                    }
+
+                    StateBadge {
+                        text: qsTr("Active")
+                        statusType: "accent"
+                        visible: cloudOptionCard.isSelected
+                        showDot: true
+                    }
+                }
+
+                StyledDivider {
+                    dividerColor: Theme.cardBorder
+                }
+
+                ColumnLayout {
+                    Layout.fillWidth: true
+                    spacing: 4
+
+                    StyledText {
+                        text: qsTr("• Ultra-fast inference (<1 sec)")
+                        variant: "caption"
+                        colorRole: "secondary"
+                    }
+
+                    StyledText {
+                        text: qsTr("• Text Enhancement via LLMs")
+                        variant: "caption"
+                        colorRole: "secondary"
+                    }
+
+                    StyledText {
+                        text: qsTr("• Free Groq API Key available")
+                        variant: "caption"
+                        colorRole: "secondary"
+                    }
+                }
+            }
+
+            MouseArea {
+                id: cloudMouse
+                anchors.fill: parent
+                hoverEnabled: true
+                cursorShape: Qt.PointingHandCursor
+                onClicked: {
+                    if (SpeechController.activeBackend !== SpeechController.TranscriptionBackend.Groq) {
+                        SpeechController.activeBackend = SpeechController.TranscriptionBackend.Groq;
+                    }
+                }
+            }
+        }
+
+        Rectangle {
+            id: offlineOptionCard
+            Layout.fillWidth: true
+            Layout.preferredHeight: offlineContent.implicitHeight + (Theme.spacingMd * 2)
+            radius: Theme.radiusMd
+            color: isSelected ? Theme.selectedBg : (offlineMouse.containsMouse ? Theme.cardBgElevated :
+                                                                                 Theme.cardBgSubtle)
+
+            border.color: isSelected ? Theme.accentColor : (offlineMouse.containsMouse ? Theme.cardBorderHover :
+                                                                                         Theme.cardBorder)
+            border.width: isSelected ? 2 : 1
+
+            readonly property bool isSelected: SpeechController.activeBackend
+                                               === SpeechController.TranscriptionBackend.WhisperCpp
+
+            Behavior on color {
+                ColorAnimation {
+                    duration: Theme.animFast
+                }
+            }
+            Behavior on border.color {
+                ColorAnimation {
+                    duration: Theme.animFast
+                }
+            }
+
+            ColumnLayout {
+                id: offlineContent
+                anchors.fill: parent
+                anchors.margins: Theme.spacingMd
+                spacing: Theme.spacingSm
+
+                RowLayout {
+                    Layout.fillWidth: true
+                    spacing: Theme.spacingSm
+
+                    Rectangle {
+                        implicitWidth: 32
+                        implicitHeight: 32
+                        radius: Theme.radiusSm
+                        color: offlineOptionCard.isSelected ? Theme.sidebarItemSelected : Theme.controlBg
+
+                        StyledIcon {
+                            anchors.centerIn: parent
+                            source: "qrc:/qt/qml/QTranscribe/assets/icons/bolt.svg"
+                            size: 16
+                            color: offlineOptionCard.isSelected ? Theme.accentColor : Theme.textSecondary
+                        }
+                    }
+
+                    ColumnLayout {
+                        Layout.fillWidth: true
+                        spacing: 1
+
+                        StyledText {
+                            text: qsTr("Offline Transcription")
+                            variant: "body"
+                            customWeight: Font.DemiBold
+                        }
+
+                        StyledText {
+                            text: qsTr("whisper.cpp Local Engine")
+                            variant: "caption"
+                            colorRole: "secondary"
+                        }
+                    }
+
+                    StateBadge {
+                        text: qsTr("Active")
+                        statusType: "accent"
+                        visible: offlineOptionCard.isSelected
+                        showDot: true
+                    }
+                }
+
+                StyledDivider {
+                    dividerColor: Theme.cardBorder
+                }
+
+                ColumnLayout {
+                    Layout.fillWidth: true
+                    spacing: 4
+
+                    StyledText {
+                        text: qsTr("• 100% private on-device inference")
+                        variant: "caption"
+                        colorRole: "secondary"
+                    }
+
+                    StyledText {
+                        text: qsTr("• Zero internet connection needed")
+                        variant: "caption"
+                        colorRole: "secondary"
+                    }
+
+                    StyledText {
+                        text: qsTr("• Uses downloaded Whisper models")
+                        variant: "caption"
+                        colorRole: "secondary"
+                    }
+                }
+            }
+
+            MouseArea {
+                id: offlineMouse
+                anchors.fill: parent
+                hoverEnabled: true
+                cursorShape: Qt.PointingHandCursor
+                onClicked: {
+                    if (SpeechController.activeBackend !== SpeechController.TranscriptionBackend.WhisperCpp) {
+                        SpeechController.activeBackend = SpeechController.TranscriptionBackend.WhisperCpp;
+                    }
+                }
+            }
+        }
+    }
+}

@@ -166,8 +166,10 @@ Item {
                         required property string formattedTimestamp
                         required property string text
 
+                        property bool isCopied: false
+
                         ListView.onPooled: {
-                            copyBtn.copied = false;
+                            delegateItem.isCopied = false;
                             feedbackTimer.stop();
                         }
 
@@ -207,26 +209,24 @@ Item {
 
                             StyledButton {
                                 id: copyBtn
-                                property bool copied: false
-
-                                text: copied ? qsTr("Copied!") : qsTr("Copy")
-                                iconSource: copied ? "qrc:/qt/qml/QTranscribe/assets/icons/check.svg" :
-                                                     "qrc:/qt/qml/QTranscribe/assets/icons/copy.svg"
+                                text: delegateItem.isCopied ? qsTr("Copied!") : qsTr("Copy")
+                                iconSource: delegateItem.isCopied ? "qrc:/qt/qml/QTranscribe/assets/icons/check.svg" :
+                                                                    "qrc:/qt/qml/QTranscribe/assets/icons/copy.svg"
                                 size: "small"
-                                variant: copied ? "primary" : "secondary"
-                                customAccentColor: copied ? Theme.colorSuccess : "transparent"
+                                variant: delegateItem.isCopied ? "primary" : "secondary"
+                                customAccentColor: delegateItem.isCopied ? Theme.colorSuccess : "transparent"
                                 Layout.preferredWidth: 72
                                 Layout.alignment: Qt.AlignVCenter
 
                                 Timer {
                                     id: feedbackTimer
                                     interval: 1500
-                                    onTriggered: copyBtn.copied = false
+                                    onTriggered: delegateItem.isCopied = false
                                 }
 
                                 onClicked: {
                                     TranscriptionModel.copyToClipboard(delegateItem.text);
-                                    copyBtn.copied = true;
+                                    delegateItem.isCopied = true;
                                     feedbackTimer.restart();
                                 }
                             }

@@ -1,18 +1,19 @@
 pragma ComponentBehavior: Bound
 import QtQuick
-import QtQuick.Controls
+import QtQuick.Templates as T
 import QtQuick.Layouts
 import QTranscribe
 import "controls"
 
-Dialog {
+T.Dialog {
     id: root
 
     title: qsTr("Clipboard Overwrite Notice")
     modal: true
     width: 480
-    anchors.centerIn: Overlay.overlay
-    closePolicy: Popup.CloseOnEscape | Popup.CloseOnPressOutside
+    x: Math.round(((Overlay.overlay ? Overlay.overlay.width : 960) - width) / 2)
+    y: Math.round(((Overlay.overlay ? Overlay.overlay.height : 660) - height) / 2)
+    closePolicy: T.Popup.CloseOnEscape | T.Popup.CloseOnPressOutside
 
     background: Rectangle {
         color: Theme.cardBgElevated
@@ -35,10 +36,9 @@ Dialog {
         }
     }
 
-    contentItem: ScrollView {
+    contentItem: T.ScrollView {
         id: scrollView
         implicitHeight: Math.min(warningLayout.implicitHeight, 420)
-        contentWidth: availableWidth
         clip: true
 
         ColumnLayout {

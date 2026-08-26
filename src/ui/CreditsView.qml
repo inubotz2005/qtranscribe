@@ -44,7 +44,7 @@ Item {
             }
 
             StyledText {
-                text: '<a href="' + compItem.url + '" style="color: ' + Theme.accentColor
+                text: '<a href="' + compItem.url + '" style="color: ' + Theme.accentColor.toString()
                       + '; text-decoration: none;">' + compItem.urlLabel + ' ↗</a>'
                 textFormat: Text.StyledText
                 variant: "caption"
@@ -71,11 +71,10 @@ Item {
     ScrollView {
         id: creditsScrollView
         anchors.fill: parent
-        contentWidth: availableWidth
         clip: true
 
         ColumnLayout {
-            width: parent.width
+            width: creditsScrollView.availableWidth
             spacing: Theme.spacingMd
 
             ColumnLayout {
@@ -146,7 +145,7 @@ Item {
 
                         StyledText {
                             text: '<a href="https://github.com/Vidhan31/qtranscribe" style="color: '
-                                  + Theme.accentColor
+                                  + Theme.accentColor.toString()
                                   + '; text-decoration: none;">github.com/Vidhan31/qtranscribe ↗</a>'
                             textFormat: Text.StyledText
                             variant: "caption"

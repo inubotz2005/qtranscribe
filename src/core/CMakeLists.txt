@@ -45,6 +45,8 @@ add_library(qtranscribe_core STATIC
     LicenseHelper.h
     ColorUtils.h
     ColorUtils.cpp
+    NavigationModel.h
+    NavigationModel.cpp
 )
 
 target_include_directories(qtranscribe_core

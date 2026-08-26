@@ -8,18 +8,18 @@ import "controls"
 Item {
     id: root
 
-    signal navigateRequested(var target)
+    signal navigateRequested(string target)
 
     implicitWidth: 620
     implicitHeight: 540
 
     ScrollView {
+        id: usageScrollView
         anchors.fill: parent
-        contentWidth: availableWidth
         clip: true
 
         ColumnLayout {
-            width: parent.width
+            width: usageScrollView.availableWidth
             spacing: Theme.spacingMd
 
             RowLayout {

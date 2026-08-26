@@ -21,6 +21,7 @@ class GroqLlmClient : public QObject {
     Q_PROPERTY(QString activePreset READ activePreset WRITE setActivePreset NOTIFY activePresetChanged FINAL)
     Q_PROPERTY(QString customPrompt READ customPrompt WRITE setCustomPrompt NOTIFY customPromptChanged FINAL)
     Q_PROPERTY(double temperature READ temperature WRITE setTemperature NOTIFY temperatureChanged FINAL)
+    Q_PROPERTY(QString formattedTemperature READ formattedTemperature NOTIFY temperatureChanged FINAL)
 
 public:
     explicit GroqLlmClient(QObject* parent = nullptr);
@@ -48,6 +49,7 @@ public:
 
     double temperature() const;
     void setTemperature(double temp);
+    QString formattedTemperature() const;
 
     Q_INVOKABLE QString systemPromptForPreset(const QString& preset) const;
     Q_INVOKABLE void processText(const QString& rawText);

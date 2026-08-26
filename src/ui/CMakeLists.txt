@@ -9,6 +9,7 @@ qt_add_qml_module(qtranscribe_ui
         QtQuick
         QtQuick.Controls
         QtQuick.Layouts
+        QtQuick.Templates
     SOURCES
         ${CMAKE_SOURCE_DIR}/src/core/AudioRecorder.h
         ${CMAKE_SOURCE_DIR}/src/core/GlobalShortcutManager.h
@@ -28,6 +29,7 @@ qt_add_qml_module(qtranscribe_ui
         ${CMAKE_SOURCE_DIR}/src/core/TrayIconHelper.h
         ${CMAKE_SOURCE_DIR}/src/core/LicenseHelper.h
         ${CMAKE_SOURCE_DIR}/src/core/ColorUtils.h
+        ${CMAKE_SOURCE_DIR}/src/core/NavigationModel.h
     QML_FILES
         Main.qml
         SpeechPanel.qml
@@ -119,6 +121,7 @@ target_link_libraries(qtranscribe_ui
         Qt6::Qml
         Qt6::Quick
         Qt6::QuickControls2
+        Qt6::QuickTemplates2
         Qt6::QuickEffects
 )
 

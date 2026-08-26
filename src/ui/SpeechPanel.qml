@@ -1,6 +1,6 @@
 pragma ComponentBehavior: Bound
 import QtQuick
-import QtQuick.Controls
+import QtQuick.Templates as T
 import QtQuick.Layouts
 import QTranscribe
 import "controls"
@@ -8,7 +8,7 @@ import "controls"
 Item {
     id: root
 
-    signal navigateRequested(var target)
+    signal navigateRequested(string target)
 
     implicitWidth: 620
     implicitHeight: 540
@@ -35,10 +35,9 @@ Item {
         }
     }
 
-    ScrollView {
+    T.ScrollView {
         id: speechScrollView
         anchors.fill: parent
-        contentWidth: availableWidth
         clip: true
 
         ColumnLayout {
@@ -222,7 +221,7 @@ Item {
                             }
                         }
 
-                        Button {
+                        T.Button {
                             id: recordBtn
                             anchors.fill: parent
                             activeFocusOnTab: true
@@ -531,7 +530,7 @@ Item {
                     implicitHeight: 96
                     clip: true
 
-                    TextArea {
+                    T.TextArea {
                         id: testingGroundText
                         text: SpeechController.dictationPadText
                         placeholderText: qsTr("Text will appear here when dictating…")
@@ -540,6 +539,10 @@ Item {
                         wrapMode: Text.WordWrap
                         selectByMouse: true
                         color: Theme.textPrimary
+                        leftPadding: Theme.spacingSm + 2
+                        rightPadding: Theme.spacingSm + 2
+                        topPadding: Theme.spacingSm
+                        bottomPadding: Theme.spacingSm
 
                         background: Rectangle {
                             color: Theme.inputBg
@@ -551,8 +554,17 @@ Item {
                         onTextChanged: {
                             if (activeFocus) {
                                 SpeechController.dictationPadText = text;
+                            } else {
+                                cursorPosition = text.length;
                             }
                         }
+                    }
+                }
+
+                Connections {
+                    target: SpeechController
+                    function onDictationPadTextChanged(): void {
+                        testingGroundText.cursorPosition = testingGroundText.text.length;
                     }
                 }
 

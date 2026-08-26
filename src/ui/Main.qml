@@ -1,13 +1,13 @@
 pragma ComponentBehavior: Bound
 import QtQuick
-import QtQuick.Controls
+import QtQuick.Templates as T
 import QtQuick.Layouts
 import Qt.labs.platform as Platform
 import QTranscribe
 import "controls"
 import "settings"
 
-ApplicationWindow {
+T.ApplicationWindow {
     id: root
     width: 960
     height: 660
@@ -19,16 +19,28 @@ ApplicationWindow {
 
     property string currentSectionId: "dictate"
 
-    readonly property var sectionToViewIndex: ({
-                                                   "dictate": 0,
-                                                   "history": 1,
-                                                   "cloudUsage": 2,
-                                                   "online": 3,
-                                                   "offline": 4,
-                                                   "system": 5,
-                                                   "about": 6,
-                                                   "license": 7
-                                               })
+    function sectionToViewIndex(section: string): int {
+        switch (section) {
+        case "dictate":
+            return 0;
+        case "history":
+            return 1;
+        case "cloudUsage":
+            return 2;
+        case "online":
+            return 3;
+        case "offline":
+            return 4;
+        case "system":
+            return 5;
+        case "about":
+            return 6;
+        case "license":
+            return 7;
+        default:
+            return 0;
+        }
+    }
 
     function normalizeSectionId(target: string): string {
         switch (target) {
@@ -44,74 +56,12 @@ ApplicationWindow {
         }
     }
 
-    function navigateToSection(target: var) {
-        if (typeof target === "number") {
-            if (target >= 0 && target < navModel.count) {
-                root.currentSectionId = navModel.get(target).sectionId;
-            }
-            return;
-        }
-        if (typeof target === "string") {
-            const normalized = normalizeSectionId(target);
-            if (normalized in sectionToViewIndex) {
-                root.currentSectionId = normalized;
-            }
+    function navigateToSection(target: string): void {
+        const normalized = normalizeSectionId(target);
+        if (normalized.length > 0) {
+            root.currentSectionId = normalized;
         }
     }
-
-    function rebuildNavModel() {
-        const isOnline = SpeechController.activeBackend === SpeechController.Groq;
-        navModel.clear();
-
-        navModel.append({
-                            section: "MAIN",
-                            title: qsTr("Dictate"),
-                            iconSource: "qrc:/qt/qml/QTranscribe/assets/icons/mic.svg",
-                            sectionId: "dictate"
-                        });
-        navModel.append({
-                            section: "MAIN",
-                            title: qsTr("History"),
-                            iconSource: "qrc:/qt/qml/QTranscribe/assets/icons/history.svg",
-                            sectionId: "history"
-                        });
-        if (isOnline) {
-            navModel.append({
-                                section: "MAIN",
-                                title: qsTr("Cloud Usage"),
-                                iconSource: "qrc:/qt/qml/QTranscribe/assets/icons/activity.svg",
-                                sectionId: "cloudUsage"
-                            });
-        }
-
-        navModel.append({
-                            section: "PREFERENCES",
-                            title: qsTr("Dictation"),
-                            iconSource: "qrc:/qt/qml/QTranscribe/assets/icons/speech.svg",
-                            sectionId: isOnline ? "online" : "offline"
-                        });
-        navModel.append({
-                            section: "PREFERENCES",
-                            title: qsTr("System & Audio"),
-                            iconSource: "qrc:/qt/qml/QTranscribe/assets/icons/keyboard.svg",
-                            sectionId: "system"
-                        });
-
-        navModel.append({
-                            section: "INFO",
-                            title: qsTr("About"),
-                            iconSource: "qrc:/qt/qml/QTranscribe/assets/icons/info.svg",
-                            sectionId: "about"
-                        });
-        navModel.append({
-                            section: "INFO",
-                            title: qsTr("License"),
-                            iconSource: "qrc:/qt/qml/QTranscribe/assets/icons/license.svg",
-                            sectionId: "license"
-                        });
-    }
-
-    Component.onCompleted: rebuildNavModel()
 
     property bool isQuitting: false
 
@@ -171,7 +121,6 @@ ApplicationWindow {
             root.quitApplication();
         }
         function onActiveBackendChanged() {
-            root.rebuildNavModel();
             if (SpeechController.activeBackend === SpeechController.Groq) {
                 if (root.currentSectionId === "offline") {
                     root.currentSectionId = "online";
@@ -184,8 +133,9 @@ ApplicationWindow {
         }
     }
 
-    ListModel {
+    NavigationModel {
         id: navModel
+        isOnline: SpeechController.activeBackend === SpeechController.Groq
     }
 
     RowLayout {
@@ -232,15 +182,10 @@ ApplicationWindow {
                         required property string title
                         required property string iconSource
                         required property string sectionId
+                        required property bool isFirstInSection
                         required property int index
 
                         readonly property bool isSelected: root.currentSectionId === navDelegate.sectionId
-                        readonly property bool isFirstInSection: {
-                            if (navDelegate.index <= 0)
-                            return true;
-                            const prev = navModel.get(navDelegate.index - 1);
-                            return !prev || prev.section !== navDelegate.section;
-                        }
 
                         width: navListView.width
                         implicitHeight: (navDelegate.isFirstInSection ? 32 : 0) + 34
@@ -327,8 +272,7 @@ ApplicationWindow {
                 id: viewStack
                 anchors.fill: parent
                 anchors.margins: Theme.spacingLg
-                currentIndex: root.sectionToViewIndex[root.currentSectionId] !== undefined
-                ? root.sectionToViewIndex[root.currentSectionId] : 0
+                currentIndex: root.sectionToViewIndex(root.currentSectionId)
 
                 onCurrentIndexChanged: {
                     viewTransitionAnim.restart();
@@ -356,35 +300,35 @@ ApplicationWindow {
                 }
 
                 ScrollView {
+                    id: onlineScrollView
                     Layout.fillWidth: true
                     Layout.fillHeight: true
-                    contentWidth: availableWidth
                     clip: true
 
                     OnlineSettingsPage {
-                        width: parent.width
+                        width: onlineScrollView.availableWidth
                     }
                 }
 
                 ScrollView {
+                    id: offlineScrollView
                     Layout.fillWidth: true
                     Layout.fillHeight: true
-                    contentWidth: availableWidth
                     clip: true
 
                     OfflineSettingsPage {
-                        width: parent.width
+                        width: offlineScrollView.availableWidth
                     }
                 }
 
                 ScrollView {
+                    id: systemScrollView
                     Layout.fillWidth: true
                     Layout.fillHeight: true
-                    contentWidth: availableWidth
                     clip: true
 
                     SystemSettingsPage {
-                        width: parent.width
+                        width: systemScrollView.availableWidth
                     }
                 }
 

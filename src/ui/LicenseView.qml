@@ -1,6 +1,6 @@
 pragma ComponentBehavior: Bound
 import QtQuick
-import QtQuick.Controls
+import QtQuick.Templates as T
 import QtQuick.Layouts
 import QTranscribe
 import "controls"
@@ -40,13 +40,13 @@ Item {
             padding: 0
             clip: true
 
-            ScrollView {
+            T.ScrollView {
                 id: licenseScrollView
                 Layout.fillWidth: true
                 Layout.fillHeight: true
                 clip: true
 
-                TextArea {
+                T.TextArea {
                     id: licenseTextArea
                     readOnly: true
                     selectByMouse: true

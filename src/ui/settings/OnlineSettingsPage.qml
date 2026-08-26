@@ -1,6 +1,6 @@
 pragma ComponentBehavior: Bound
 import QtQuick
-import QtQuick.Controls
+import QtQuick.Templates as T
 import QtQuick.Layouts
 import QTranscribe
 import "../controls"
@@ -277,21 +277,28 @@ Item {
                         StyledTextField {
                             id: apiKeyInput
                             Layout.fillWidth: true
-                            echoMode: showKeyCheck.checked ? TextField.Normal : TextField.Password
+                            Layout.alignment: Qt.AlignVCenter
+                            echoMode: showKeyCheck.checked ? T.TextField.Normal : T.TextField.Password
                             text: GroqApiClient.apiKey
                             placeholderText: qsTr("gsk_...")
                         }
 
-                        CheckBox {
+                        T.CheckBox {
                             id: showKeyCheck
                             text: qsTr("Show")
                             font.pixelSize: Theme.fontSizeCaption
+                            Layout.alignment: Qt.AlignVCenter
+                            implicitHeight: 34
+                            implicitWidth: indicator.implicitWidth + Theme.spacingXs + showLabel.implicitWidth
+                                           + leftPadding + rightPadding
+                            leftPadding: 4
+                            rightPadding: 4
 
                             indicator: Rectangle {
                                 implicitWidth: 16
                                 implicitHeight: 16
                                 x: showKeyCheck.leftPadding
-                                y: parent.height / 2 - height / 2
+                                y: Math.round((showKeyCheck.height - height) / 2)
                                 radius: Theme.radiusXs
                                 color: showKeyCheck.checked ? Theme.accentColor : Theme.controlBg
                                 border.color: showKeyCheck.checked ? Theme.accentColor : Theme.controlBorder
@@ -307,6 +314,7 @@ Item {
                             }
 
                             contentItem: StyledText {
+                                id: showLabel
                                 text: showKeyCheck.text
                                 variant: "caption"
                                 colorRole: "secondary"
@@ -321,8 +329,9 @@ Item {
                             iconSource: "qrc:/qt/qml/QTranscribe/assets/icons/save.svg"
                             variant: "primary"
                             size: "medium"
+                            Layout.alignment: Qt.AlignVCenter
                             onClicked: {
-                                GroqApiClient.apiKey = apiKeyInput.text.trim();
+                                GroqApiClient.apiKey = apiKeyInput.text;
                             }
                         }
                     }
@@ -433,12 +442,12 @@ Item {
                         }
                     }
 
-                    ScrollView {
+                    T.ScrollView {
                         Layout.fillWidth: true
                         implicitHeight: 85
                         clip: true
 
-                        TextArea {
+                        T.TextArea {
                             id: promptArea
                             text: GroqSttClient.customPrompt
                             placeholderText: qsTr(
@@ -448,6 +457,10 @@ Item {
                             wrapMode: TextArea.Wrap
                             font.pixelSize: Theme.fontSizeBody
                             color: Theme.textPrimary
+                            leftPadding: Theme.spacingSm + 2
+                            rightPadding: Theme.spacingSm + 2
+                            topPadding: Theme.spacingSm
+                            bottomPadding: Theme.spacingSm
 
                             background: Rectangle {
                                 color: Theme.inputBg
@@ -615,7 +628,7 @@ Item {
                         }
 
                         StyledText {
-                            text: GroqLlmClient.temperature.toFixed(2)
+                            text: GroqLlmClient.formattedTemperature
                             variant: "body"
                             customWeight: Font.Bold
                             colorRole: "accent"
@@ -643,7 +656,7 @@ Item {
                         stepSize: 0.05
                         value: GroqLlmClient.temperature
                         onMoved: {
-                            GroqLlmClient.temperature = value;
+                            GroqLlmClient.temperature = tempSlider.value;
                         }
                     }
                 }
@@ -684,12 +697,12 @@ Item {
                         }
                     }
 
-                    ScrollView {
+                    T.ScrollView {
                         Layout.fillWidth: true
                         implicitHeight: 100
                         clip: true
 
-                        TextArea {
+                        T.TextArea {
                             id: customPromptArea
                             readOnly: GroqLlmClient.activePreset !== "custom"
                             text: GroqLlmClient.activePreset === "custom" ? GroqLlmClient.customPrompt :
@@ -702,6 +715,10 @@ Item {
                             wrapMode: TextArea.Wrap
                             font.pixelSize: Theme.fontSizeBody
                             color: Theme.textPrimary
+                            leftPadding: Theme.spacingSm + 2
+                            rightPadding: Theme.spacingSm + 2
+                            topPadding: Theme.spacingSm
+                            bottomPadding: Theme.spacingSm
 
                             background: Rectangle {
                                 color: customPromptArea.readOnly ? Theme.cardBgSubtle : Theme.inputBg
@@ -724,7 +741,7 @@ Item {
                         repeat: false
                         onTriggered: {
                             if (GroqLlmClient.activePreset === "custom") {
-                                GroqLlmClient.customPrompt = customPromptArea.text.trim();
+                                GroqLlmClient.customPrompt = customPromptArea.text;
                             }
                         }
                     }
@@ -758,7 +775,7 @@ Item {
                             variant: "primary"
                             onClicked: {
                                 saveLlmPromptTimer.stop();
-                                GroqLlmClient.customPrompt = customPromptArea.text.trim();
+                                GroqLlmClient.customPrompt = customPromptArea.text;
                             }
                         }
                     }

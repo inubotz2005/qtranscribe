@@ -1,9 +1,9 @@
 pragma ComponentBehavior: Bound
 import QtQuick
-import QtQuick.Controls
+import QtQuick.Templates as T
 import QTranscribe
 
-ComboBox {
+T.ComboBox {
     id: root
 
     implicitWidth: 200
@@ -12,7 +12,7 @@ ComboBox {
 
     contentItem: Text {
         leftPadding: Theme.spacingMd
-        rightPadding: root.indicator.width + Theme.spacingMd
+        rightPadding: root.indicator ? root.indicator.width + Theme.spacingMd : Theme.spacingMd
         text: root.displayText
         font.pixelSize: root.font.pixelSize
         font.weight: root.font.weight
@@ -59,7 +59,7 @@ ComboBox {
         }
     }
 
-    popup: Popup {
+    popup: T.Popup {
         y: root.height + 4
         width: Math.max(root.width, 180)
         implicitHeight: Math.min(260, popupListView.contentHeight + topPadding + bottomPadding)
@@ -80,33 +80,18 @@ ComboBox {
             currentIndex: root.highlightedIndex
             boundsBehavior: Flickable.StopAtBounds
 
-            ScrollBar.vertical: ScrollBar {
-                policy: popupListView.contentHeight > popupListView.height ? ScrollBar.AlwaysOn : ScrollBar.AsNeeded
+            T.ScrollBar.vertical: T.ScrollBar {
+                policy: T.ScrollBar.AsNeeded
                 width: 6
             }
         }
     }
 
-    delegate: ItemDelegate {
+    delegate: T.ItemDelegate {
         id: delegateItem
         required property int index
-        required property var model
-        required property var modelData
 
-        readonly property string itemText: {
-            if (root.textRole && root.textRole.length > 0) {
-                if (delegateItem.model && delegateItem.model[root.textRole] !== undefined) {
-                    return String(delegateItem.model[root.textRole]);
-                }
-                if (delegateItem.modelData && delegateItem.modelData[root.textRole] !== undefined) {
-                    return String(delegateItem.modelData[root.textRole]);
-                }
-            }
-            if (delegateItem.modelData !== undefined && delegateItem.modelData !== null) {
-                return String(delegateItem.modelData);
-            }
-            return root.textAt(delegateItem.index);
-        }
+        readonly property string itemText: root.textAt(delegateItem.index)
 
         width: ListView.view ? ListView.view.width : root.width
         implicitHeight: 32

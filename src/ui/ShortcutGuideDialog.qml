@@ -1,17 +1,19 @@
 pragma ComponentBehavior: Bound
 import QtQuick
-import QtQuick.Controls
+import QtQuick.Templates as T
 import QtQuick.Layouts
 import QTranscribe
 import "controls"
 
-Dialog {
+T.Dialog {
     id: root
 
     title: qsTr("Setup Custom Desktop Shortcut")
     modal: true
     width: 480
-    standardButtons: Dialog.Close
+    x: Math.round(((Overlay.overlay ? Overlay.overlay.width : 960) - width) / 2)
+    y: Math.round(((Overlay.overlay ? Overlay.overlay.height : 660) - height) / 2)
+    closePolicy: T.Popup.CloseOnEscape | T.Popup.CloseOnPressOutside
 
     background: Rectangle {
         color: Theme.cardBgElevated

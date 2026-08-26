@@ -1,4 +1,5 @@
 pragma ComponentBehavior: Bound
+pragma ValueTypeBehavior: Addressable
 import QtQuick
 import QtQuick.Layouts
 import QTranscribe
@@ -36,11 +37,45 @@ Rectangle {
         if (statusType === "accent") {
             return Theme.accentColor;
         }
-        return Theme.withAlpha(Theme.textPrimary, 0.85);
+        return Theme.textPrimary;
     }
 
-    color: Theme.statusBgColor(resolvedColor, 0.15)
-    border.color: Theme.statusBorderColor(resolvedColor, 0.4)
+    color: {
+        if (customColor.a > 0.001) {
+            return customColor;
+        }
+        if (statusType === "success") {
+            return Theme.statusSuccessBg;
+        }
+        if (statusType === "warning") {
+            return Theme.statusWarningBg;
+        }
+        if (statusType === "danger") {
+            return Theme.statusDangerBg;
+        }
+        if (statusType === "accent") {
+            return Theme.statusAccentBg;
+        }
+        return Theme.statusNeutralBg;
+    }
+    border.color: {
+        if (customColor.a > 0.001) {
+            return customColor;
+        }
+        if (statusType === "success") {
+            return Theme.statusSuccessBorder;
+        }
+        if (statusType === "warning") {
+            return Theme.statusWarningBorder;
+        }
+        if (statusType === "danger") {
+            return Theme.statusDangerBorder;
+        }
+        if (statusType === "accent") {
+            return Theme.statusAccentBorder;
+        }
+        return Theme.statusNeutralBorder;
+    }
     border.width: 1
 
     RowLayout {

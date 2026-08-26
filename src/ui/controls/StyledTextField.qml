@@ -1,9 +1,9 @@
 pragma ComponentBehavior: Bound
 import QtQuick
-import QtQuick.Controls
+import QtQuick.Templates as T
 import QTranscribe
 
-TextField {
+T.TextField {
     id: root
 
     property bool isSearchPill: false
@@ -16,11 +16,12 @@ TextField {
     selectByMouse: true
     font.pixelSize: Theme.fontSizeBody
 
+    clip: true
     leftPadding: isSearchPill ? Theme.spacingMd : Theme.spacingSm + 2
     rightPadding: isSearchPill ? Theme.spacingMd : Theme.spacingSm + 2
-    topPadding: 0
-    bottomPadding: 0
-    verticalAlignment: Text.AlignVCenter
+    topPadding: Math.max(0, Math.floor((height - contentHeight) / 2))
+    bottomPadding: topPadding
+    verticalAlignment: TextInput.AlignVCenter
 
     background: Rectangle {
         color: Theme.inputBg

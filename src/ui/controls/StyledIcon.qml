@@ -28,6 +28,6 @@ Item {
         source: iconImg
         colorization: 1.0
         colorizationColor: root.color
-        visible: root.source.toString().length > 0
+        visible: iconImg.status === Image.Ready
     }
 }

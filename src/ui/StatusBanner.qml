@@ -38,8 +38,26 @@ Rectangle {
     readonly property bool isCompact: root.width > 0 && root.width < 500
 
     implicitHeight: bannerLayout.implicitHeight + (Theme.spacingMd * 2)
-    color: Theme.statusBgColor(resolvedAccentColor, 0.12)
-    border.color: customBorderColor.a > 0.001 ? customBorderColor : Theme.statusBorderColor(resolvedAccentColor, 0.4)
+    color: {
+        if (bannerType === "warning")
+        return Theme.statusWarningBg;
+        if (bannerType === "danger")
+        return Theme.statusDangerBg;
+        if (bannerType === "success")
+        return Theme.statusSuccessBg;
+        return Theme.statusAccentBg;
+    }
+    border.color: {
+        if (customBorderColor.a > 0.001)
+        return customBorderColor;
+        if (bannerType === "warning")
+        return Theme.statusWarningBorder;
+        if (bannerType === "danger")
+        return Theme.statusDangerBorder;
+        if (bannerType === "success")
+        return Theme.statusSuccessBorder;
+        return Theme.statusAccentBorder;
+    }
     border.width: 1
     radius: 0
 

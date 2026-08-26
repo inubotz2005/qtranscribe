@@ -1,6 +1,6 @@
 pragma ComponentBehavior: Bound
 import QtQuick
-import QtQuick.Controls
+import QtQuick.Templates as T
 import QtQuick.Layouts
 import QTranscribe
 import ".."
@@ -237,8 +237,8 @@ Item {
                 Layout.fillWidth: true
                 implicitHeight: errorLayout.implicitHeight + Theme.spacingSm * 2
                 radius: Theme.radiusSm
-                color: Theme.statusBgColor(Theme.colorDanger, 0.15)
-                border.color: Theme.statusBorderColor(Theme.colorDanger, 0.4)
+                color: Theme.statusDangerBg
+                border.color: Theme.statusDangerBorder
                 border.width: 1
                 visible: WhisperModelManager.lastError.length > 0
 
@@ -480,7 +480,7 @@ Item {
                                     }
                                 }
 
-                                ProgressBar {
+                                T.ProgressBar {
                                     Layout.fillWidth: true
                                     implicitHeight: 4
                                     from: 0.0

@@ -1,6 +1,6 @@
 pragma ComponentBehavior: Bound
 import QtQuick
-import QtQuick.Controls
+import QtQuick.Templates as T
 import QtQuick.Layouts
 import QTranscribe
 import "../controls"
@@ -145,7 +145,7 @@ Item {
                         customWeight: Font.Medium
                     }
 
-                    ProgressBar {
+                    T.ProgressBar {
                         Layout.fillWidth: true
                         implicitHeight: 8
                         from: 0.0
@@ -368,7 +368,7 @@ Item {
                         stepSize: 50
                         value: TextInjectorClient.injectionDelay
                         onMoved: {
-                            TextInjectorClient.injectionDelay = Math.round(value);
+                            TextInjectorClient.injectionDelay = Math.round(delaySlider.value);
                         }
                     }
                 }

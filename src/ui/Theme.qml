@@ -46,44 +46,19 @@ QtObject {
     readonly property int animNormal: 220
     readonly property int animSlow: 350
 
-    readonly property SystemPalette _sysPalette: SystemPalette {
-        colorGroup: SystemPalette.Active
-    }
-
-    function isValidAccent(c: color): bool {
-        if (!c || c.a < 0.5)
-            return false;
-        if ((c.r + c.g + c.b) < 0.2 || (c.r > 0.95 && c.g > 0.95 && c.b > 0.95))
-            return false;
-        if (c.hslLightness < 0.15 || c.hslLightness > 0.92)
-            return false;
-        if (c.hslSaturation < 0.15 && Math.abs(c.r - c.g) < 0.05 && Math.abs(c.g - c.b) < 0.05)
-            return false;
-        return true;
-    }
-
     readonly property color defaultAccent: isDark ? "#3584E4" : "#1C71D8"
-    readonly property color systemAccent: {
-        if (isValidAccent(ColorUtils.accentColor))
-        return ColorUtils.accentColor;
-        if (isValidAccent(_sysPalette.accent))
-        return _sysPalette.accent;
-        if (isValidAccent(_sysPalette.highlight))
-        return _sysPalette.highlight;
-        return defaultAccent;
-    }
-    readonly property color accentColor: systemAccent
-    readonly property color accentColorHover: ColorUtils.tint(accentColor, isDark ? "#26ffffff" : "#1a000000")
-    readonly property color accentColorPressed: ColorUtils.tint(accentColor, "#33000000")
+    readonly property color accentColor: ColorUtils.accentColor
+    readonly property color accentColorHover: ColorUtils.accentColorHover
+    readonly property color accentColorPressed: ColorUtils.accentColorPressed
 
     readonly property color colorPrimary: accentColor
     readonly property color colorPrimaryHover: accentColorHover
     readonly property color colorPrimaryPressed: accentColorPressed
 
     readonly property color textLink: accentColor
-    readonly property color focusRingColor: ColorUtils.withAlpha(accentColor, 0.6)
+    readonly property color focusRingColor: ColorUtils.focusRingColor
     readonly property int focusRingWidth: 2
-    readonly property color sidebarItemSelected: ColorUtils.withAlpha(accentColor, isDark ? 0.22 : 0.16)
+    readonly property color sidebarItemSelected: ColorUtils.sidebarItemSelected
 
     readonly property color windowBg: isDark ? "#1C1C1E" : "#F2F2F7"
     readonly property color sidebarBg: isDark ? "#141416" : "#EBEBF0"
@@ -109,7 +84,7 @@ QtObject {
 
     readonly property color hoverOverlay: isDark ? "#0fffffff" : "#0a000000"
     readonly property color pressedOverlay: isDark ? "#33000000" : "#14000000"
-    readonly property color selectedBg: ColorUtils.withAlpha(accentColor, isDark ? 0.18 : 0.14)
+    readonly property color selectedBg: ColorUtils.selectedBg
     readonly property color sidebarItemHover: isDark ? "#0dffffff" : "#0a000000"
 
     readonly property color buttonPrimaryBg: accentColor
@@ -117,7 +92,7 @@ QtObject {
     readonly property color buttonPrimaryBgPressed: accentColorPressed
 
     readonly property color buttonDangerBg: colorDanger
-    readonly property color buttonDangerBgHover: ColorUtils.tint(colorDanger, isDark ? "#1affffff" : "#14000000")
+    readonly property color buttonDangerBgHover: ColorUtils.buttonDangerBgHover
     readonly property color buttonDangerBgPressed: colorDangerHover
 
     readonly property color sliderThumbBg: "#FFFFFF"
@@ -144,19 +119,15 @@ QtObject {
     readonly property color switchTrackOff: isDark ? "#39393D" : "#E5E5EA"
     readonly property color switchTrackOn: accentColor
     readonly property color switchThumb: "#FFFFFF"
-    function withAlpha(c: color, alpha: real): color {
-        return ColorUtils.withAlpha(c, alpha);
-    }
 
-    function tint(baseCol: color, tintCol: color): color {
-        return ColorUtils.tint(baseCol, tintCol);
-    }
-
-    function statusBgColor(c: color, alpha: real): color {
-        return ColorUtils.statusBg(c, isDark ? alpha : alpha * 0.85);
-    }
-
-    function statusBorderColor(c: color, alpha: real): color {
-        return ColorUtils.statusBorder(c, isDark ? alpha : alpha * 0.75);
-    }
+    readonly property color statusSuccessBg: isDark ? "#2630D158" : "#2034C759"
+    readonly property color statusSuccessBorder: isDark ? "#6630D158" : "#4D34C759"
+    readonly property color statusWarningBg: isDark ? "#26FF9F0A" : "#20FF9500"
+    readonly property color statusWarningBorder: isDark ? "#66FF9F0A" : "#4DFF9500"
+    readonly property color statusDangerBg: isDark ? "#26FF453A" : "#20FF3B30"
+    readonly property color statusDangerBorder: isDark ? "#66FF453A" : "#4DFF3B30"
+    readonly property color statusAccentBg: sidebarItemSelected
+    readonly property color statusAccentBorder: focusRingColor
+    readonly property color statusNeutralBg: isDark ? "#1fffffff" : "#14000000"
+    readonly property color statusNeutralBorder: isDark ? "#40ffffff" : "#33000000"
 }

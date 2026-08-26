@@ -1,16 +1,16 @@
 pragma ComponentBehavior: Bound
 import QtQuick
-import QtQuick.Controls
+import QtQuick.Templates as T
 import QtQuick.Layouts
 import QTranscribe
 
-Button {
+T.Button {
     id: root
 
     property string variant: "secondary"
     property string size: "medium"
     property string iconText: ""
-    property url iconSource: ""
+    property string iconSource: ""
     property color customAccentColor: "transparent"
     property int customRadius: Theme.radiusSm
 
@@ -21,7 +21,7 @@ Button {
         return 28;
         if (root.size === "large")
         return 38;
-        return 32;
+        return 34;
     }
 
     implicitWidth: Math.max((root.size === "small" ? 64 : 76), contentRow.implicitWidth + (root.size === "small"
@@ -54,30 +54,35 @@ Button {
         return Theme.textPrimary;
     }
 
-    contentItem: RowLayout {
-        id: contentRow
-        spacing: Theme.spacingXs
-        anchors.centerIn: parent
+    contentItem: Item {
+        implicitWidth: contentRow.implicitWidth
+        implicitHeight: contentRow.implicitHeight
 
-        StyledIcon {
-            visible: root.iconSource.toString().length > 0
-            source: root.iconSource
-            size: root.size === "small" ? 14 : 16
-            color: root.contentColor
-            Layout.alignment: Qt.AlignVCenter
-        }
+        RowLayout {
+            id: contentRow
+            anchors.centerIn: parent
+            spacing: Theme.spacingXs
 
-        StyledText {
-            id: btnLabel
-            visible: root.text.length > 0
-            text: root.text
-            customPixelSize: root.font.pixelSize
-            customWeight: root.font.weight
-            horizontalAlignment: Text.AlignHCenter
-            verticalAlignment: Text.AlignVCenter
-            Layout.alignment: Qt.AlignVCenter
-            elide: Text.ElideRight
-            customColor: root.contentColor
+            StyledIcon {
+                visible: root.iconSource !== ""
+                source: root.iconSource
+                size: root.size === "small" ? 14 : 16
+                color: root.contentColor
+                Layout.alignment: Qt.AlignVCenter
+            }
+
+            StyledText {
+                id: btnLabel
+                visible: root.text.length > 0
+                text: root.text
+                customPixelSize: root.font.pixelSize
+                customWeight: root.font.weight
+                horizontalAlignment: Text.AlignHCenter
+                verticalAlignment: Text.AlignVCenter
+                Layout.alignment: Qt.AlignVCenter
+                elide: Text.ElideRight
+                customColor: root.contentColor
+            }
         }
     }
 
@@ -89,10 +94,6 @@ Button {
         color: {
             if (root.variant === "primary") {
                 if (root.customAccentColor.a > 0.001) {
-                    if (root.down)
-                    return Theme.tint(root.resolvedAccent, Theme.pressedOverlay);
-                    if (root.hovered)
-                    return Theme.tint(root.resolvedAccent, Theme.hoverOverlay);
                     return root.resolvedAccent;
                 }
                 if (root.down)
@@ -139,6 +140,13 @@ Button {
                 duration: Theme.animFast
                 easing.type: Easing.OutCubic
             }
+        }
+
+        Rectangle {
+            anchors.fill: parent
+            radius: bgRect.radius
+            color: root.down ? Theme.pressedOverlay : (root.hovered ? Theme.hoverOverlay : "transparent")
+            visible: root.variant === "primary" && root.customAccentColor.a > 0.001 && (root.down || root.hovered)
         }
     }
 }

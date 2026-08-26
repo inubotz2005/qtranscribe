@@ -88,6 +88,31 @@ QColor ColorUtils::accentColor() const {
     return m_isDark ? QColor(u"#3584E4"_s) : QColor(u"#1C71D8"_s);
 }
 
+QColor ColorUtils::accentColorHover() const {
+    return tint(accentColor(), m_isDark ? QColor(255, 255, 255, 38) : QColor(0, 0, 0, 26));
+}
+
+QColor ColorUtils::accentColorPressed() const {
+    return tint(accentColor(), QColor(0, 0, 0, 51));
+}
+
+QColor ColorUtils::focusRingColor() const {
+    return withAlpha(accentColor(), 0.6);
+}
+
+QColor ColorUtils::sidebarItemSelected() const {
+    return withAlpha(accentColor(), m_isDark ? 0.22 : 0.16);
+}
+
+QColor ColorUtils::selectedBg() const {
+    return withAlpha(accentColor(), m_isDark ? 0.18 : 0.14);
+}
+
+QColor ColorUtils::buttonDangerBgHover() const {
+    const QColor danger = m_isDark ? QColor(u"#FF453A"_s) : QColor(u"#FF3B30"_s);
+    return tint(danger, m_isDark ? QColor(255, 255, 255, 26) : QColor(0, 0, 0, 20));
+}
+
 void ColorUtils::updateEffectiveTheme() {
     const auto* hints = QGuiApplication::styleHints();
     const auto scheme = hints ? hints->colorScheme() : Qt::ColorScheme::Unknown;
@@ -122,10 +147,10 @@ QColor ColorUtils::tint(const QColor& baseColor, const QColor& tintColor) {
         std::lerp(static_cast<float>(baseColor.blueF()), static_cast<float>(tintColor.blueF()), a), baseColor.alphaF());
 }
 
-QColor ColorUtils::statusBg(const QColor& baseColor, qreal alpha) {
-    return withAlpha(baseColor, alpha);
+QColor ColorUtils::statusBg(const QColor& baseColor, qreal alpha) const {
+    return withAlpha(baseColor, m_isDark ? alpha : alpha * 0.85);
 }
 
-QColor ColorUtils::statusBorder(const QColor& baseColor, qreal alpha) {
-    return withAlpha(baseColor, alpha);
+QColor ColorUtils::statusBorder(const QColor& baseColor, qreal alpha) const {
+    return withAlpha(baseColor, m_isDark ? alpha : alpha * 0.75);
 }

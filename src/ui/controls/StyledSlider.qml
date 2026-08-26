@@ -1,9 +1,9 @@
 pragma ComponentBehavior: Bound
 import QtQuick
-import QtQuick.Controls
+import QtQuick.Templates as T
 import QTranscribe
 
-Slider {
+T.Slider {
     id: root
 
     implicitWidth: 200

@@ -120,8 +120,9 @@ QString GroqLlmClient::customPrompt() const {
 }
 
 void GroqLlmClient::setCustomPrompt(const QString& prompt) {
-    if (m_customPrompt != prompt) {
-        m_customPrompt = prompt;
+    const QString trimmed = prompt.trimmed();
+    if (m_customPrompt != trimmed) {
+        m_customPrompt = trimmed;
         QSettings settings;
         settings.setValue(u"Groq/LlmCustomPrompt"_s, m_customPrompt);
         qCDebug(lcLLM) << "Custom LLM prompt updated";
@@ -141,6 +142,10 @@ void GroqLlmClient::setTemperature(double temp) {
         settings.setValue(u"Groq/LlmTemperature"_s, m_temperature);
         emit temperatureChanged();
     }
+}
+
+QString GroqLlmClient::formattedTemperature() const {
+    return QString::number(m_temperature, 'f', 2);
 }
 
 QString GroqLlmClient::systemPromptForPreset(const QString& preset) const {

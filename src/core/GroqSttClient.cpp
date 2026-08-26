@@ -64,6 +64,9 @@ void GroqSttClient::onApiKeySetChanged() {
 }
 
 void GroqSttClient::activate() {
+    if (m_apiClient) {
+        m_apiClient->ensureApiKeyLoaded();
+    }
     emit readyChanged();
 }
 

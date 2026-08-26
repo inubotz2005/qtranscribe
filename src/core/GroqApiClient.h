@@ -35,6 +35,12 @@ public:
     void setApiKey(const QString& key);
     bool apiKeySet() const;
 
+    Q_INVOKABLE void loadApiKey();
+    void ensureApiKeyLoaded();
+
+    void setStorageKeys(const QString& keychainService, const QString& keychainKey,
+                        const QString& settingsKey = QString());
+
     QNetworkAccessManager* networkAccessManager();
     const QNetworkRequestFactory& requestFactory() const;
 
@@ -59,13 +65,21 @@ signals:
 private:
     void updateFactoryAuth();
     void loadApiKeyFromKeychain();
+    void loadApiKeyFromSettingsFallback();
     void saveApiKeyToKeychain(const QString& key);
     void deleteApiKeyFromKeychain();
 
     QNetworkAccessManager* m_nam = nullptr;
     QNetworkRequestFactory m_requestFactory;
     QString m_apiKey;
+    bool m_apiKeyLoaded = false;
+    bool m_isLoadingApiKey = false;
 
     inline static constexpr QStringView kKeychainService = u"QTranscribe";
     inline static constexpr QStringView kKeychainKey = u"groq_api_key";
+    inline static constexpr QStringView kSettingsApiKey = u"Groq/ApiKey";
+
+    QString m_keychainService = kKeychainService.toString();
+    QString m_keychainKey = kKeychainKey.toString();
+    QString m_settingsKey = kSettingsApiKey.toString();
 };

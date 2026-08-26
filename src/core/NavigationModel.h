@@ -21,13 +21,7 @@ class NavigationModel : public QAbstractListModel {
     Q_PROPERTY(int count READ count NOTIFY countChanged FINAL)
 
 public:
-    enum Roles {
-        SectionRole = Qt::UserRole + 1,
-        TitleRole,
-        IconSourceRole,
-        SectionIdRole,
-        IsFirstInSectionRole
-    };
+    enum Roles { SectionRole = Qt::UserRole + 1, TitleRole, IconSourceRole, SectionIdRole, IsFirstInSectionRole };
     Q_ENUM(Roles)
 
     explicit NavigationModel(QObject* parent = nullptr);

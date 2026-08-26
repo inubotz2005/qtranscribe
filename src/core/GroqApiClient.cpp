@@ -8,6 +8,7 @@
 #include <QJsonDocument>
 #include <QJsonObject>
 #include <QNetworkProxyFactory>
+#include <QSettings>
 #include <QSslConfiguration>
 #include <QSslSocket>
 
@@ -39,8 +40,6 @@ GroqApiClient::GroqApiClient(QObject* parent)
     QHttpHeaders headers;
     headers.append(QHttpHeaders::WellKnownHeader::UserAgent, userAgent());
     m_requestFactory.setCommonHeaders(headers);
-
-    loadApiKeyFromKeychain();
 }
 
 #ifndef QTRANSCRIBE_VERSION
@@ -62,6 +61,7 @@ void GroqApiClient::setApiKey(const QString& key) {
     if (m_apiKey != trimmed) {
         const bool wasSet = apiKeySet();
         m_apiKey = trimmed;
+        m_apiKeyLoaded = true;
         updateFactoryAuth();
         emit apiKeyChanged();
 
@@ -74,6 +74,29 @@ void GroqApiClient::setApiKey(const QString& key) {
         } else {
             deleteApiKeyFromKeychain();
         }
+    }
+}
+
+void GroqApiClient::loadApiKey() {
+    if (m_isLoadingApiKey) {
+        return;
+    }
+    loadApiKeyFromKeychain();
+}
+
+void GroqApiClient::ensureApiKeyLoaded() {
+    if (m_apiKeyLoaded || m_isLoadingApiKey) {
+        return;
+    }
+    loadApiKey();
+}
+
+void GroqApiClient::setStorageKeys(const QString& keychainService, const QString& keychainKey,
+                                   const QString& settingsKey) {
+    m_keychainService = keychainService;
+    m_keychainKey = keychainKey;
+    if (!settingsKey.isEmpty()) {
+        m_settingsKey = settingsKey;
     }
 }
 
@@ -163,11 +186,14 @@ QNetworkReply* GroqApiClient::postMultipart(const QString& relativePath, QHttpMu
 }
 
 void GroqApiClient::loadApiKeyFromKeychain() {
-    auto* readJob = new QKeychain::ReadPasswordJob(kKeychainService.toString(), this);
-    readJob->setKey(kKeychainKey.toString());
+    m_isLoadingApiKey = true;
+    auto* readJob = new QKeychain::ReadPasswordJob(m_keychainService, this);
+    readJob->setKey(m_keychainKey);
     readJob->setAutoDelete(true);
 
     connect(readJob, &QKeychain::ReadPasswordJob::finished, this, [this](QKeychain::Job* job) {
+        m_isLoadingApiKey = false;
+        m_apiKeyLoaded = true;
         auto* rJob = static_cast<QKeychain::ReadPasswordJob*>(job);
         if (!rJob->error()) {
             const QString key = rJob->textData().trimmed();
@@ -178,28 +204,51 @@ void GroqApiClient::loadApiKeyFromKeychain() {
                 updateFactoryAuth();
                 emit apiKeyChanged();
                 emit apiKeySetChanged();
+                return;
             }
         } else if (rJob->error() == QKeychain::EntryNotFound) {
-            qCDebug(lcNetwork) << "No Groq API key found in system keychain";
+            qCDebug(lcNetwork) << "No Groq API key found in system keychain, checking QSettings fallback";
         } else {
-            qWarning("GroqApiClient: Failed to read API key from keychain: %s", qPrintable(rJob->errorString()));
+            qWarning("GroqApiClient: Failed to read API key from keychain (%s), checking QSettings fallback",
+                     qPrintable(rJob->errorString()));
         }
+
+        loadApiKeyFromSettingsFallback();
     });
 
     readJob->start();
 }
 
+void GroqApiClient::loadApiKeyFromSettingsFallback() {
+    QSettings settings;
+    const QString key = settings.value(m_settingsKey).toString().trimmed();
+    if (!key.isEmpty()) {
+        qCDebug(lcNetwork) << "Groq API key loaded from QSettings fallback (key length:" << key.size() << ")";
+        m_apiKey = key;
+        updateFactoryAuth();
+        emit apiKeyChanged();
+        emit apiKeySetChanged();
+    } else {
+        qCDebug(lcNetwork) << "No Groq API key found in QSettings fallback";
+    }
+}
+
 void GroqApiClient::saveApiKeyToKeychain(const QString& key) {
-    auto* writeJob = new QKeychain::WritePasswordJob(kKeychainService.toString(), this);
-    writeJob->setKey(kKeychainKey.toString());
+    auto* writeJob = new QKeychain::WritePasswordJob(m_keychainService, this);
+    writeJob->setKey(m_keychainKey);
     writeJob->setTextData(key);
     writeJob->setAutoDelete(true);
 
-    connect(writeJob, &QKeychain::WritePasswordJob::finished, this, [](QKeychain::Job* job) {
+    connect(writeJob, &QKeychain::WritePasswordJob::finished, this, [this, key](QKeychain::Job* job) {
         if (job->error()) {
-            qWarning("GroqApiClient: Failed to save API key to keychain: %s", qPrintable(job->errorString()));
+            qWarning("GroqApiClient: Failed to save API key to keychain (%s), saving to QSettings fallback",
+                     qPrintable(job->errorString()));
+            QSettings settings;
+            settings.setValue(m_settingsKey, key);
         } else {
             qCDebug(lcNetwork) << "Groq API key persisted into system keychain";
+            QSettings settings;
+            settings.remove(m_settingsKey);
         }
     });
 
@@ -207,8 +256,11 @@ void GroqApiClient::saveApiKeyToKeychain(const QString& key) {
 }
 
 void GroqApiClient::deleteApiKeyFromKeychain() {
-    auto* deleteJob = new QKeychain::DeletePasswordJob(kKeychainService.toString(), this);
-    deleteJob->setKey(kKeychainKey.toString());
+    QSettings settings;
+    settings.remove(m_settingsKey);
+
+    auto* deleteJob = new QKeychain::DeletePasswordJob(m_keychainService, this);
+    deleteJob->setKey(m_keychainKey);
     deleteJob->setAutoDelete(true);
 
     connect(deleteJob, &QKeychain::DeletePasswordJob::finished, this, [](QKeychain::Job* job) {

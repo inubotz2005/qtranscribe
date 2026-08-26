@@ -147,11 +147,35 @@ else()
     set(QT_TEST_LD_PREPEND "")
 endif()
 
+qt_add_executable(test_groq_api_client
+    test_groq_api_client.cpp
+)
+
+target_link_libraries(test_groq_api_client
+    PRIVATE
+        qtranscribe_core
+        Qt6::Core
+        Qt6::Test
+        Qt6::Network
+)
+
+target_include_directories(test_groq_api_client
+    PRIVATE
+        ${CMAKE_SOURCE_DIR}/src
+        ${CMAKE_SOURCE_DIR}/src/core
+)
+
+add_test(
+    NAME GroqApiClientTest
+    COMMAND test_groq_api_client
+)
+
 set_tests_properties(
     WhisperPipelineTest
     WhisperStorageTest
     TranscriptionPipelineTest
     HttpRequestRunnerTest
+    GroqApiClientTest
     IpcServerTest
     PROPERTIES
         ENVIRONMENT "QT_QPA_PLATFORM=offscreen;QT_MEDIA_BACKEND=null;LD_LIBRARY_PATH=${QT_TEST_LD_PREPEND}$ENV{LD_LIBRARY_PATH}"

@@ -13,6 +13,18 @@ Item {
 
     property int activeSubTab: 0
 
+    Component.onCompleted: {
+        if (visible) {
+            GroqApiClient.loadApiKey();
+        }
+    }
+
+    onVisibleChanged: {
+        if (visible) {
+            GroqApiClient.loadApiKey();
+        }
+    }
+
     ListModel {
         id: whisperModelsModel
         ListElement {
@@ -345,7 +357,7 @@ Item {
 
                     StyledText {
                         text: qsTr(
-                                  "Free API keys available with generous quotas at console.groq.com. Stored securely in system keychain.")
+                                  "Free API keys available with generous quotas at console.groq.com. Stored securely in system keychain (with configuration fallback).")
                         variant: "caption"
                         colorRole: "secondary"
                         Layout.fillWidth: true

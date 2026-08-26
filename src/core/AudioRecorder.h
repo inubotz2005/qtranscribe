@@ -28,9 +28,9 @@ public:
     QString statusMessage() const;
     qreal audioLevel() const;
 
-    Q_INVOKABLE void startRecording();
-    Q_INVOKABLE void stopRecording();
-    Q_INVOKABLE void cancelRecording();
+    virtual void startRecording();
+    virtual void stopRecording();
+    virtual void cancelRecording();
 
 signals:
     void recordingFinished(const QByteArray& wavData);
@@ -40,14 +40,17 @@ signals:
     void audioLevelChanged();
     void maxDurationReached();
 
+protected:
+    void setRecording(bool recording);
+    void setHasAudioInputDevice(bool hasDevice);
+    void setStatusMessage(const QString& message);
+    void setAudioLevel(qreal level);
+
 private slots:
     void onReadyRead();
     void onAudioInputsChanged();
 
 private:
-    void setRecording(bool recording);
-    void setStatusMessage(const QString& message);
-    void setAudioLevel(qreal level);
     QByteArray buildWavFile(const QByteArray& pcmData) const;
 
     QAudioFormat m_format;

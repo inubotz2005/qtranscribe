@@ -101,5 +101,15 @@ T.Dialog {
                 Layout.fillWidth: true
             }
         }
+
+        StyledText {
+            text: qsTr(
+                      "<b>Note:</b> Custom desktop shortcuts operate in <b>Toggle mode</b>. Push-to-Talk requires native support for the <code>org.freedesktop.portal.GlobalShortcuts</code> portal (available on KDE Plasma 6+ and compatible Wayland compositors).")
+            textFormat: Text.StyledText
+            variant: "caption"
+            colorRole: "secondary"
+            wrapMode: Text.WordWrap
+            Layout.fillWidth: true
+        }
     }
 }

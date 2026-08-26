@@ -57,15 +57,17 @@ private slots:
     void onShortcutDeactivated(const QDBusObjectPath& sessionHandle, const QString& shortcutId, qulonglong timestamp,
                                const QVariantMap& options);
 
+protected:
+    void setAvailable(bool available);
+    void setSupported(bool supported);
+    void setStatusMessage(const QString& msg);
+
 private:
     void registerHostApp();
     void createSession();
     void bindShortcuts();
     void ensureDesktopFileExists();
     void ensureIconExists();
-    void setAvailable(bool available);
-    void setSupported(bool supported);
-    void setStatusMessage(const QString& msg);
 
     QDBusObjectPath m_sessionHandle;
     bool m_available = false;

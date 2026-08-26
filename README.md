@@ -1,6 +1,6 @@
 # QTranscribe
 
-Speech-to-text for Wayland. Press a shortcut, speak, press it again, and your dictation is typed directly into the active focused input field.
+Speech-to-text for Wayland. Press a shortcut, speak, and your dictation is typed directly into the active focused input field.
 
 Uses offline `whisper.cpp` by default with Vulkan GPU acceleration or CPU fallback, with optional cloud transcription via the Groq Whisper API. Built natively with Qt 6 and QML for Wayland.
 
@@ -36,7 +36,9 @@ Uses offline `whisper.cpp` by default with Vulkan GPU acceleration or CPU fallba
 
 ## Features
 
-- **Types into focused fields.** Inserts text directly into the active focused input field across browsers, editors, terminals, and chat apps without touching the clipboard.
+- **Direct typing into focused fields.** Inserts transcribed text directly into the active input field across browsers, editors, and chat apps without touching the clipboard.
+- **Write-only input injection.** QTranscribe never reads, intercepts, or logs your keystrokes. It only has write access through a helper daemon writing to `/dev/uinput`, with a fallback to clipboard paste.
+- **Push-to-talk and toggle modes.** Hold to record and release to transcribe on supported desktop environments, or use toggle shortcuts.
 - **Offline by default.** Transcribes speech on-device using `whisper.cpp` without sending audio over the network.
 - **Hardware accelerated.** Runs local models on Vulkan-supported GPUs with automatic CPU fallback.
 - **Fast cloud transcription.** Optional Groq Whisper API integration for fast cloud dictation. Free Groq API keys are available at [console.groq.com](https://console.groq.com/keys).
@@ -97,15 +99,16 @@ sudo pacman -R qtranscribe
 
 ## Desktop environment support and Wayland notes
 
-Tested on modern Wayland compositors:
+Push-to-talk mode requires the desktop compositor to implement the `org.freedesktop.portal.GlobalShortcuts` portal interface. The portal delivers press and release events, allowing the app to detect when a key is held down and released. On environments without this portal, dictation works via toggle mode using a custom shortcut mapped to `qtranscribe --toggle`.
 
-| Desktop environment | Status | Global shortcuts portal | Notes |
-| :--- | :---: | :---: | :--- |
-| **KDE Plasma 6** | Supported | Yes (`org.freedesktop.portal.GlobalShortcuts`) | Native KWallet integration, system Qt theming, and Klipper privacy flags |
-| **GNOME 50+** | Supported | Yes (`org.freedesktop.portal.GlobalShortcuts`) | Uses GNOME Keyring / Secret Service |
-| **GNOME 46** | Supported | No (manual setup) | Map a custom shortcut to `qtranscribe --toggle` in Settings |
-| **COSMIC** (System76) | Supported | No (manual setup) | Map a custom shortcut to `qtranscribe --toggle` in Settings |
-| **Sway / wlroots** | Supported | No (manual setup) | Bind `qtranscribe --toggle` in your compositor configuration |
+| Desktop environment | Status | Global shortcuts portal | Push-to-talk | Notes |
+| :--- | :---: | :---: | :---: | :--- |
+| **KDE Plasma 6** | Supported | Yes (`org.freedesktop.portal.GlobalShortcuts`) | Supported | Native KWallet integration, system Qt theming, and Klipper privacy flags |
+| **GNOME 48+** | Supported | Yes (`org.freedesktop.portal.GlobalShortcuts`) | Supported | Uses GNOME Keyring and Secret Service |
+| **Hyprland** | Supported | Yes (`xdg-desktop-portal-hyprland`) | Supported | Configured through the Hyprland portal backend |
+| **GNOME 46** | Supported | No | Unsupported | Toggle mode only. Map a custom shortcut to `qtranscribe --toggle` in Settings |
+| **COSMIC** (System76) | Supported | No | Unsupported | Toggle mode only. Map a custom shortcut to `qtranscribe --toggle` in Settings |
+| **Sway / wlroots** | Supported | No | Unsupported | Toggle mode only. Bind `qtranscribe --toggle` in your compositor configuration |
 
 ---
 
@@ -133,18 +136,18 @@ Launch QTranscribe and open **Settings**:
 - **Cloud (Groq):** Get a free API key at [console.groq.com](https://console.groq.com/keys) and paste it under **Cloud & API**. Keys are saved to the system keyring, which prompts for your password to unlock the wallet when needed.
 
 ### 2. Set shortcut
-- **Plasma 6 / GNOME 50+:** Approve the portal shortcut prompt on first start.
-- **COSMIC / GNOME 46 / Sway / Hyprland:** Bind a custom keyboard shortcut to `qtranscribe --toggle`.
+- **Plasma 6, GNOME 48+, Hyprland:** Approve the portal shortcut prompt on first start. Supports both toggle and push-to-talk.
+- **COSMIC, GNOME 46, Sway:** Bind a custom keyboard shortcut to `qtranscribe --toggle` in your desktop or compositor settings.
 
 ### 3. Dictate
-Focus any input field, hit your shortcut, speak, and press it again to finish. The text types directly into the focused field.
+- **Push-to-talk (Portal DEs):** Focus any input field, hold your shortcut, speak, and release.
+- **Toggle mode:** Focus any input field, hit your shortcut, speak, and press it again to finish.
 
 ---
 
 ## Tips
 
-- **Mouse bindings.** Bind `qtranscribe --toggle` to an extra mouse button using `input-remapper` or Piper for push-to-talk dictation.
-- **Terminal integration.** Works in Alacritty, Foot, Kitty, and GNOME Terminal without modifying clipboard contents.
+- **Mouse bindings.** Bind `qtranscribe --toggle` to an extra mouse button using `input-remapper` or Piper for toggle dictation.
 - **Pre-injection delay.** If an application drops the first keystroke after switching focus, increase the delay slider in **System & Typing**.
 
 ---
@@ -154,16 +157,18 @@ Focus any input field, hit your shortcut, speak, and press it again to finish. T
 - **No text typed into target field:**
   - Verify the destination input field has active keyboard focus.
   - If using a local development build, ensure capabilities were granted: `sudo setcap cap_dac_override+ep build/keyinjectord`.
-  - Run `qtranscribe` from a terminal to view debug logs.
-- **Global shortcut does not fire on GNOME 46 / Sway:**
-  - The desktop portal is missing or unsupported on these compositors. Add a native desktop shortcut that executes `qtranscribe --toggle`.
+  - Run `qtranscribe` in your terminal to view debug logs.
+- **Push-to-talk does not work:**
+  - Push-to-talk requires a desktop environment with `org.freedesktop.portal.GlobalShortcuts` (KDE Plasma 6, GNOME 48+, Hyprland). On GNOME 46, COSMIC, or Sway, use toggle mode with `qtranscribe --toggle`.
+- **Global shortcut does not fire on GNOME 46 or Sway:**
+  - The desktop portal shortcut interface is not supported on these compositors. Add a native desktop shortcut that executes `qtranscribe --toggle`.
 - **Local model fails to load:**
   - Verify that the model download completed under `~/.local/share/qtranscribe/models/`.
-  - Check terminal logs for Vulkan driver errors. If your GPU driver lacks compute support, inference falls back to CPU threads automatically.
+  - Check log output for Vulkan driver errors. If your GPU driver lacks compute support, inference falls back to CPU threads automatically.
 - **Groq API errors:**
   - Check your API key and network connection. Free tier keys are subject to Groq rate limits.
 - **Prompted for password on startup:**
-  - This is normal. Your system asks for your password to unlock the wallet or keyring (GNOME Keyring or KWallet) so QTranscribe can read stored API keys.
+  - This is expected. Your system asks for your password to unlock the wallet or keyring (GNOME Keyring or KWallet) so QTranscribe can read stored API keys.
 - **Keyring unlocked warning or errors:**
   - Ensure `gnome-keyring-daemon` or `kwalletd` is running and unlocked for your user session.
 - **Clipboard contents overwritten:**
@@ -174,13 +179,13 @@ Focus any input field, hit your shortcut, speak, and press it again to finish. T
 ## Roadmap
 
 - [x] **Encrypted file fallback for API keys.** Fallback storage mechanism when system keyring / Secret Service is unavailable.
-- [ ] **Push-to-talk mode.** Hold shortcut to record, release to transcribe and type.
+- [x] **Push-to-talk mode.** Hold shortcut to record, release to transcribe and type on supported desktop environments.
 - [ ] **Improved clipboard restoration.** Better handling for non-KDE environments that lack integrated clipboard managers.
 - [ ] **Audio file transcription.** Upload and transcribe local audio recordings directly from the UI or CLI.
 - [ ] **First-run onboarding.** Setup assistant to guide new users through permissions, microphone selection, and shortcut configuration.
 - [ ] **Native wlroots input protocols.** Support for protocols like `virtual-keyboard-v1` on wlroots compositors (Sway, River, Hyprland).
 - [ ] **Simplified settings UI.** Streamlined preferences layout with basic and advanced view modes.
-- [ ] **More cloud providers.** Additional backends such as OpenAI Whisper, Deepgram, and custom self-hosted endpoints.
+- [ ] **More cloud providers.** Additional backends such as OpenAI Whisper and Deepgram.
 - [ ] **Backup and restore.** Export and import application settings, custom vocabulary, prompts, and dictation history.
 - [ ] **Voice macros.** Trigger desktop actions and simulate keyboard shortcuts based on spoken voice commands.
 - [ ] **Floating dictation overlay.** Minimal on-screen indicator near the active input cursor during recording.
@@ -191,16 +196,41 @@ Focus any input field, hit your shortcut, speak, and press it again to finish. T
 
 ### Prerequisites
 
-- CMake and Ninja
-- C++20 compiler (GCC 13+ or Clang 17+)
-- Qt 6 and Qt6Keychain
-- `libevdev` and `libcap`
-- Vulkan SDK (optional, for GPU inference)
+#### Core build dependencies
+- **CMake:** Version 3.25 or newer
+- **Ninja:** Build tool
+- **C++20 compiler:** GCC 13+ or Clang 17+
+- **pkg-config** / **pkgconf**
+
+#### Qt 6 libraries and modules
+- **Qt 6:** Version 6.11 or newer (`qtbase`, `qtdeclarative`, `qtmultimedia`, `qtwayland`, `qtquickcontrols2`, `qtquickeffects`, `qtdbus`)
+- **Qt6Keychain:** Version 0.15.0 or newer (built against Qt 6)
+
+#### System libraries and protocols
+- **libevdev:** Development headers (`libevdev-dev` / `libevdev-devel`)
+- **libcap:** Development headers and utilities (`libcap-dev` / `libcap-devel`, `libcap2-bin`)
+- **libsecret:** Secret Service development library (`libsecret-1-dev` / `libsecret-devel`)
+- **Wayland:** Client libraries and protocols (`libwayland-dev`, `wayland-protocols`, `libxkbcommon-dev`)
+
+#### Hardware acceleration (optional)
+- **Vulkan SDK:** `libvulkan-dev` / `vulkan-headers`
+- **Shader compiler:** `glslc` (from `shaderc`)
+- **SPIR-V:** `spirv-headers`
+
+#### Code formatting and linting (optional)
+- **clang-format:** LLVM 17+
+- **qmllint** and **qmlformat:** Included with Qt 6
+- **pre-commit:** For Git hygiene hooks
 
 ### 1. Build application and daemon
 
 ```bash
-cmake --preset linux-qt6-debug && cmake --build build
+# Configure and build in debug mode
+cmake --preset linux-qt6-debug
+cmake --build build
+
+# Or build only the GUI application
+cmake --build build --target qtranscribe
 ```
 
 ### 2. Grant helper daemon capability
@@ -215,14 +245,22 @@ sudo setcap cap_dac_override+ep build/keyinjectord
 # Run unit and QML lint tests
 ctest --preset test-debug
 
-# Format source files
+# Format all C++ and QML source files
 cmake --build build --target format
+
+# Run QML linter
+cmake --build build --target all_qmllint
+
+# Run full pre-commit test suite
+pre-commit run --all-files
 ```
 
 ### 4. Release build
 
 ```bash
-cmake --preset linux-qt6-release && cmake --build build-release
+cmake --preset linux-qt6-release
+cmake --build build-release
+ctest --preset test-release
 ```
 
 ---

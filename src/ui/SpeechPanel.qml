@@ -226,9 +226,14 @@ Item {
                             anchors.fill: parent
                             activeFocusOnTab: true
                             Accessible.role: Accessible.Button
-                            Accessible.name: SpeechController.recording ? qsTr("Stop Dictation") : qsTr(
-                                                                              "Start Dictation")
-                            Accessible.description: qsTr("Toggle speech recognition recording")
+                            Accessible.name: SpeechController.recording ? qsTr("Stop Dictation") : (
+                                                                              SpeechController.recordingMode
+                                                                              === SpeechController.PushToTalk ? qsTr(
+                                                                                                                    "Push to Talk") :
+                                                                                                                qsTr("Start Dictation"))
+                            Accessible.description: SpeechController.recordingMode === SpeechController.PushToTalk
+                                                    ? qsTr("Push to talk speech recognition") : qsTr(
+                                                          "Toggle speech recognition recording")
                             enabled: SpeechController.canRecord
 
                             background: Rectangle {
@@ -310,7 +315,10 @@ Item {
                                 StyledText {
                                     text: SpeechController.recording ? qsTr("Stop") : (SpeechController.isBusy ? qsTr(
                                                                                                                      "Processing…") :
-                                                                                                                 qsTr("Record"))
+                                                                                                                 (SpeechController.recordingMode
+                                                                                                                  === SpeechController.PushToTalk
+                                                                                                                  ? qsTr("Talk") :
+                                                                                                                    qsTr("Record")))
                                     variant: "caption"
                                     customWeight: Font.DemiBold
                                     colorRole: "onAccent"
@@ -393,6 +401,18 @@ Item {
                     wrapMode: Text.WordWrap
                     Layout.fillWidth: true
                     visible: audioStatusText.text.length > 0
+                }
+
+                StyledText {
+                    id: modeHintText
+                    text: SpeechController.recordingMode === SpeechController.PushToTalk ? qsTr(
+                                                                                               "Push-to-Talk: Hold Ctrl+Shift+Space to talk") :
+                                                                                           qsTr("Toggle Mode: Press Ctrl+Shift+Space to start / stop")
+                    variant: "caption"
+                    colorRole: "secondary"
+                    horizontalAlignment: Text.AlignHCenter
+                    Layout.fillWidth: true
+                    visible: !SpeechController.recording && !SpeechController.isBusy
                 }
 
                 Item {

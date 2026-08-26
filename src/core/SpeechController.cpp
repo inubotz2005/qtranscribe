@@ -30,8 +30,15 @@ SpeechController::SpeechController(QObject* parent)
 
     QSettings settings;
     m_soundEnabled = settings.value(u"Audio/SoundEnabled"_s, true).toBool();
+    const QString modeStr = settings.value(u"Speech/RecordingMode"_s, u"Toggle"_s).toString();
+    if (modeStr == u"PushToTalk"_s) {
+        m_recordingMode = RecordingMode::PushToTalk;
+    } else {
+        m_recordingMode = RecordingMode::Toggle;
+    }
 
-    qCDebug(lcSpeech) << "SpeechController presentation coordinator constructed.";
+    qCDebug(lcSpeech) << "SpeechController presentation coordinator constructed. Initial recording mode:"
+                      << (m_recordingMode == RecordingMode::PushToTalk ? "PushToTalk" : "Toggle");
 }
 
 void SpeechController::setPipeline(TranscriptionPipeline* pipeline) {
@@ -100,6 +107,8 @@ void SpeechController::setShortcutManager(GlobalShortcutManager* mgr) {
     if (m_shortcutMgr) {
         disconnect(m_shortcutMgr, &GlobalShortcutManager::shortcutActivated, this,
                    &SpeechController::onShortcutActivated);
+        disconnect(m_shortcutMgr, &GlobalShortcutManager::shortcutDeactivated, this,
+                   &SpeechController::onShortcutDeactivated);
         disconnect(m_shortcutMgr, &GlobalShortcutManager::availableChanged, this,
                    &SpeechController::updatePresenterState);
         disconnect(m_shortcutMgr, &GlobalShortcutManager::supportedChanged, this,
@@ -110,6 +119,8 @@ void SpeechController::setShortcutManager(GlobalShortcutManager* mgr) {
     m_shortcutMgr = mgr;
     if (m_shortcutMgr) {
         connect(m_shortcutMgr, &GlobalShortcutManager::shortcutActivated, this, &SpeechController::onShortcutActivated);
+        connect(m_shortcutMgr, &GlobalShortcutManager::shortcutDeactivated, this,
+                &SpeechController::onShortcutDeactivated);
         connect(m_shortcutMgr, &GlobalShortcutManager::availableChanged, this, &SpeechController::updatePresenterState);
         connect(m_shortcutMgr, &GlobalShortcutManager::supportedChanged, this, &SpeechController::updatePresenterState);
         connect(m_shortcutMgr, &GlobalShortcutManager::statusMessageChanged, this,
@@ -166,6 +177,30 @@ void SpeechController::setActiveBackend(TranscriptionBackend backend) {
     }
 }
 
+SpeechController::RecordingMode SpeechController::recordingMode() const {
+    return m_recordingMode;
+}
+
+void SpeechController::setRecordingMode(RecordingMode mode) {
+    if (mode == RecordingMode::PushToTalk && !pushToTalkSupported()) {
+        qCDebug(lcSpeech)
+            << "Push-to-Talk requested but not supported on current desktop environment; falling back to Toggle";
+        mode = RecordingMode::Toggle;
+    }
+
+    if (m_recordingMode != mode) {
+        m_recordingMode = mode;
+        QSettings settings;
+        settings.setValue(u"Speech/RecordingMode"_s,
+                          m_recordingMode == RecordingMode::PushToTalk ? u"PushToTalk"_s : u"Toggle"_s);
+        emit recordingModeChanged();
+    }
+}
+
+bool SpeechController::pushToTalkSupported() const {
+    return m_shortcutMgr && m_shortcutMgr->isSupported();
+}
+
 void SpeechController::initialize() {
     if (m_initialized) {
         return;
@@ -179,6 +214,13 @@ void SpeechController::initialize() {
 }
 
 void SpeechController::updatePresenterState() {
+    if (m_recordingMode == RecordingMode::PushToTalk && !pushToTalkSupported()) {
+        qCDebug(lcSpeech) << "Push-to-talk not supported by portal; reverting to Toggle mode";
+        m_recordingMode = RecordingMode::Toggle;
+        QSettings settings;
+        settings.setValue(u"Speech/RecordingMode"_s, u"Toggle"_s);
+        emit recordingModeChanged();
+    }
     emit canRecordChanged();
     emit systemHealthChanged();
 }
@@ -431,9 +473,28 @@ void SpeechController::playStopSound() {
 }
 
 void SpeechController::onShortcutActivated(const QString& shortcutId) {
-    if (shortcutId == u"toggle-recording"_s) {
-        qCDebug(lcSpeech) << "SpeechController: Global shortcut triggered toggleRecording";
-        toggleRecording();
+    if (shortcutId == u"toggle-recording"_s || shortcutId == u"record"_s) {
+        qCDebug(lcSpeech) << "SpeechController: Global shortcut activated (mode:"
+                          << (m_recordingMode == RecordingMode::PushToTalk ? "PushToTalk" : "Toggle") << ")";
+        if (m_recordingMode == RecordingMode::PushToTalk) {
+            if (!recording() && canRecord()) {
+                startRecording();
+            }
+        } else {
+            toggleRecording();
+        }
+    }
+}
+
+void SpeechController::onShortcutDeactivated(const QString& shortcutId) {
+    if (shortcutId == u"toggle-recording"_s || shortcutId == u"record"_s) {
+        qCDebug(lcSpeech) << "SpeechController: Global shortcut deactivated (mode:"
+                          << (m_recordingMode == RecordingMode::PushToTalk ? "PushToTalk" : "Toggle") << ")";
+        if (m_recordingMode == RecordingMode::PushToTalk) {
+            if (recording()) {
+                stopRecording();
+            }
+        }
     }
 }
 

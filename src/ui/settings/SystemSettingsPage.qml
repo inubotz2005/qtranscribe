@@ -4,6 +4,7 @@ import QtQuick.Templates as T
 import QtQuick.Layouts
 import QTranscribe
 import "../controls"
+import ".."
 
 Item {
     id: root
@@ -46,7 +47,7 @@ Item {
             }
 
             StyledText {
-                text: qsTr("Configure appearance, microphone, feedback sounds, direct typing, and global shortcuts")
+                text: qsTr("Configure appearance, recording mode, feedback sounds, direct typing, and global shortcuts")
                 variant: "caption"
                 colorRole: "secondary"
             }
@@ -74,6 +75,268 @@ Item {
 
                     onActivated: index => {
                         Theme.themeMode = currentValue;
+                    }
+                }
+            }
+        }
+
+        StyledCard {
+            title: qsTr("Recording Mode")
+            description: qsTr("Choose how global shortcuts and recording triggers activate speech transcription")
+
+            StatusBanner {
+                visible: !SpeechController.pushToTalkSupported
+                bannerType: "warning"
+                title: qsTr("Push-to-Talk Unavailable on Current Desktop")
+                message: qsTr(
+                             "Push-to-Talk requires key press and release tracking via the XDG Global Shortcuts portal (org.freedesktop.portal.GlobalShortcuts). Your desktop environment does not support this portal, so dictation is restricted to Toggle mode.")
+            }
+
+            GridLayout {
+                Layout.fillWidth: true
+                columns: root.width >= 560 ? 2 : 1
+                columnSpacing: Theme.spacingMd
+                rowSpacing: Theme.spacingMd
+
+                Rectangle {
+                    id: toggleModeCard
+                    Layout.fillWidth: true
+                    Layout.preferredHeight: toggleContent.implicitHeight + (Theme.spacingMd * 2)
+                    radius: Theme.radiusMd
+                    color: isSelected ? Theme.selectedBg : (toggleMouse.containsMouse ? Theme.cardBgElevated :
+                                                                                        Theme.cardBgSubtle)
+
+                    border.color: isSelected ? Theme.accentColor : (toggleMouse.containsMouse ? Theme.cardBorderHover :
+                                                                                                Theme.cardBorder)
+                    border.width: isSelected ? 2 : 1
+
+                    readonly property bool isSelected: SpeechController.recordingMode === SpeechController.Toggle
+
+                    Behavior on color {
+                        ColorAnimation {
+                            duration: Theme.animFast
+                            easing.type: Easing.OutCubic
+                        }
+                    }
+                    Behavior on border.color {
+                        ColorAnimation {
+                            duration: Theme.animFast
+                            easing.type: Easing.OutCubic
+                        }
+                    }
+
+                    ColumnLayout {
+                        id: toggleContent
+                        anchors.fill: parent
+                        anchors.margins: Theme.spacingMd
+                        spacing: Theme.spacingSm
+
+                        RowLayout {
+                            Layout.fillWidth: true
+                            spacing: Theme.spacingSm
+
+                            Rectangle {
+                                implicitWidth: 32
+                                implicitHeight: 32
+                                radius: Theme.radiusSm
+                                color: toggleModeCard.isSelected ? Theme.sidebarItemSelected : Theme.controlBg
+
+                                StyledIcon {
+                                    anchors.centerIn: parent
+                                    source: "qrc:/qt/qml/QTranscribe/assets/icons/speech.svg"
+                                    size: 16
+                                    color: toggleModeCard.isSelected ? Theme.accentColor : Theme.textSecondary
+                                }
+                            }
+
+                            ColumnLayout {
+                                Layout.fillWidth: true
+                                spacing: 1
+
+                                StyledText {
+                                    text: qsTr("Toggle Mode")
+                                    variant: "body"
+                                    customWeight: Font.DemiBold
+                                }
+
+                                StyledText {
+                                    text: qsTr("Press to start / stop")
+                                    variant: "caption"
+                                    colorRole: "secondary"
+                                }
+                            }
+
+                            StateBadge {
+                                text: qsTr("Active")
+                                statusType: "accent"
+                                visible: toggleModeCard.isSelected
+                                showDot: true
+                            }
+                        }
+
+                        StyledDivider {
+                            dividerColor: Theme.cardBorder
+                        }
+
+                        ColumnLayout {
+                            Layout.fillWidth: true
+                            spacing: 4
+
+                            StyledText {
+                                text: qsTr("• Press shortcut or button once to start recording")
+                                variant: "caption"
+                                colorRole: "secondary"
+                            }
+
+                            StyledText {
+                                text: qsTr("• Press again to stop recording and transcribe")
+                                variant: "caption"
+                                colorRole: "secondary"
+                            }
+
+                            StyledText {
+                                text: qsTr("• Compatible with all desktop environments")
+                                variant: "caption"
+                                colorRole: "secondary"
+                            }
+                        }
+                    }
+
+                    MouseArea {
+                        id: toggleMouse
+                        anchors.fill: parent
+                        hoverEnabled: true
+                        cursorShape: Qt.PointingHandCursor
+                        onClicked: {
+                            SpeechController.recordingMode = SpeechController.Toggle;
+                        }
+                    }
+                }
+
+                Rectangle {
+                    id: pttModeCard
+                    Layout.fillWidth: true
+                    Layout.preferredHeight: pttContent.implicitHeight + (Theme.spacingMd * 2)
+                    radius: Theme.radiusMd
+                    opacity: SpeechController.pushToTalkSupported ? 1.0 : 0.6
+                    color: isSelected ? Theme.selectedBg : (pttMouse.containsMouse
+                                                            && SpeechController.pushToTalkSupported
+                                                            ? Theme.cardBgElevated : Theme.cardBgSubtle)
+                    border.color: isSelected ? Theme.accentColor : (pttMouse.containsMouse
+                                                                    && SpeechController.pushToTalkSupported
+                                                                    ? Theme.cardBorderHover : Theme.cardBorder)
+                    border.width: isSelected ? 2 : 1
+
+                    readonly property bool isSelected: SpeechController.recordingMode === SpeechController.PushToTalk
+
+                    Behavior on color {
+                        ColorAnimation {
+                            duration: Theme.animFast
+                            easing.type: Easing.OutCubic
+                        }
+                    }
+                    Behavior on border.color {
+                        ColorAnimation {
+                            duration: Theme.animFast
+                            easing.type: Easing.OutCubic
+                        }
+                    }
+
+                    ColumnLayout {
+                        id: pttContent
+                        anchors.fill: parent
+                        anchors.margins: Theme.spacingMd
+                        spacing: Theme.spacingSm
+
+                        RowLayout {
+                            Layout.fillWidth: true
+                            spacing: Theme.spacingSm
+
+                            Rectangle {
+                                implicitWidth: 32
+                                implicitHeight: 32
+                                radius: Theme.radiusSm
+                                color: pttModeCard.isSelected ? Theme.sidebarItemSelected : Theme.controlBg
+
+                                StyledIcon {
+                                    anchors.centerIn: parent
+                                    source: "qrc:/qt/qml/QTranscribe/assets/icons/mic.svg"
+                                    size: 16
+                                    color: pttModeCard.isSelected ? Theme.accentColor : Theme.textSecondary
+                                }
+                            }
+
+                            ColumnLayout {
+                                Layout.fillWidth: true
+                                spacing: 1
+
+                                StyledText {
+                                    text: qsTr("Push-to-Talk")
+                                    variant: "body"
+                                    customWeight: Font.DemiBold
+                                }
+
+                                StyledText {
+                                    text: qsTr("Hold shortcut to speak")
+                                    variant: "caption"
+                                    colorRole: "secondary"
+                                }
+                            }
+
+                            StateBadge {
+                                text: qsTr("Active")
+                                statusType: "accent"
+                                visible: pttModeCard.isSelected
+                                showDot: true
+                            }
+
+                            StateBadge {
+                                text: qsTr("Unavailable")
+                                statusType: "warning"
+                                visible: !SpeechController.pushToTalkSupported
+                                showDot: false
+                            }
+                        }
+
+                        StyledDivider {
+                            dividerColor: Theme.cardBorder
+                        }
+
+                        ColumnLayout {
+                            Layout.fillWidth: true
+                            spacing: 4
+
+                            StyledText {
+                                text: qsTr("• Hold shortcut down while speaking")
+                                variant: "caption"
+                                colorRole: "secondary"
+                            }
+
+                            StyledText {
+                                text: qsTr("• Release shortcut to immediately transcribe")
+                                variant: "caption"
+                                colorRole: "secondary"
+                            }
+
+                            StyledText {
+                                text: qsTr("• Requires XDG Global Shortcuts portal support")
+                                variant: "caption"
+                                colorRole: "secondary"
+                            }
+                        }
+                    }
+
+                    MouseArea {
+                        id: pttMouse
+                        anchors.fill: parent
+                        hoverEnabled: SpeechController.pushToTalkSupported
+                        cursorShape: SpeechController.pushToTalkSupported ? Qt.PointingHandCursor : Qt.ArrowCursor
+                        enabled: SpeechController.pushToTalkSupported
+                        onClicked: {
+                            if (SpeechController.pushToTalkSupported) {
+                                SpeechController.recordingMode = SpeechController.PushToTalk;
+                            }
+                        }
                     }
                 }
             }

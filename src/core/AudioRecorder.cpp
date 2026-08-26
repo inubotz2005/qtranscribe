@@ -169,6 +169,7 @@ void AudioRecorder::stopRecording() {
     if (m_pcmData.isEmpty()) {
         qCDebug(lcAudio) << "Audio recording stopped: zero bytes captured";
         setStatusMessage(u"No audio captured"_s);
+        emit recordingFinished({});
         return;
     }
 
@@ -320,5 +321,12 @@ void AudioRecorder::setAudioLevel(qreal level) {
     if (!qFuzzyCompare(m_audioLevel, level)) {
         m_audioLevel = level;
         emit audioLevelChanged();
+    }
+}
+
+void AudioRecorder::setHasAudioInputDevice(bool hasDevice) {
+    if (m_hasAudioInputDevice != hasDevice) {
+        m_hasAudioInputDevice = hasDevice;
+        emit hasAudioInputDeviceChanged();
     }
 }

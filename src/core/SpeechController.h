@@ -24,7 +24,12 @@ public:
     enum class TranscriptionBackend { Groq, WhisperCpp };
     Q_ENUM(TranscriptionBackend)
 
+    enum class RecordingMode { Toggle, PushToTalk };
+    Q_ENUM(RecordingMode)
+
     Q_PROPERTY(TranscriptionBackend activeBackend READ activeBackend WRITE setActiveBackend NOTIFY activeBackendChanged FINAL)
+    Q_PROPERTY(RecordingMode recordingMode READ recordingMode WRITE setRecordingMode NOTIFY recordingModeChanged FINAL)
+    Q_PROPERTY(bool pushToTalkSupported READ pushToTalkSupported NOTIFY systemHealthChanged FINAL)
     Q_PROPERTY(DictationState dictationState READ dictationState NOTIFY dictationStateChanged FINAL)
     Q_PROPERTY(bool isBusy READ isBusy NOTIFY dictationStateChanged FINAL)
     Q_PROPERTY(bool canRecord READ canRecord NOTIFY canRecordChanged FINAL)
@@ -63,6 +68,10 @@ public:
 
     TranscriptionBackend activeBackend() const;
     void setActiveBackend(TranscriptionBackend backend);
+
+    RecordingMode recordingMode() const;
+    void setRecordingMode(RecordingMode mode);
+    bool pushToTalkSupported() const;
 
     DictationState dictationState() const;
     bool isBusy() const;
@@ -113,6 +122,7 @@ public slots:
 
 signals:
     void activeBackendChanged();
+    void recordingModeChanged();
     void dictationStateChanged();
     void canRecordChanged();
     void audioLevelChanged(qreal level);
@@ -133,6 +143,7 @@ signals:
 
 private slots:
     void onShortcutActivated(const QString& shortcutId);
+    void onShortcutDeactivated(const QString& shortcutId);
     void onPipelineTranscriptionFinished(const QString& text);
     void onPipelineStateChanged(TranscriptionPipeline::State state);
     void updatePresenterState();
@@ -151,5 +162,6 @@ private:
 
     bool m_soundEnabled = true;
     bool m_initialized = false;
+    RecordingMode m_recordingMode = RecordingMode::Toggle;
     QString m_dictationPadText;
 };

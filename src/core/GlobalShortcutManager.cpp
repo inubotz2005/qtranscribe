@@ -319,9 +319,10 @@ void GlobalShortcutManager::bindShortcuts() {
         QDBusMessage::createMethodCall(u"org.freedesktop.portal.Desktop"_s, u"/org/freedesktop/portal/desktop"_s,
                                        u"org.freedesktop.portal.GlobalShortcuts"_s, u"BindShortcuts"_s);
 
-    ShortcutList shortcuts = {PortalShortcut {.id = u"toggle-recording"_s,
-                                              .options = {{u"description"_s, u"Toggle speech-to-text recording"_s},
-                                                          {u"preferred_trigger"_s, u"CTRL+SHIFT+space"_s}}}};
+    ShortcutList shortcuts = {
+        PortalShortcut {.id = u"toggle-recording"_s,
+                        .options = {{u"description"_s, u"Speech-to-text dictation (Toggle / Push-to-Talk)"_s},
+                                    {u"preferred_trigger"_s, u"CTRL+SHIFT+space"_s}}}};
 
     QVariantMap options;
     options.insert(u"handle_token"_s, bindReqToken);

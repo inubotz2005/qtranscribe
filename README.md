@@ -37,7 +37,6 @@ Uses offline `whisper.cpp` by default with Vulkan GPU acceleration or CPU fallba
 ## Features
 
 - **Direct typing into focused fields.** Inserts transcribed text directly into the active input field across browsers, editors, and chat apps without touching the clipboard.
-- **Write-only input injection.** QTranscribe never reads, intercepts, or logs your keystrokes. It only has write access through a helper daemon writing to `/dev/uinput`, with a fallback to clipboard paste.
 - **Push-to-talk and toggle modes.** Hold to record and release to transcribe on supported desktop environments, or use toggle shortcuts.
 - **Offline by default.** Transcribes speech on-device using `whisper.cpp` without sending audio over the network.
 - **Hardware accelerated.** Runs local models on Vulkan-supported GPUs with automatic CPU fallback.
@@ -99,16 +98,24 @@ sudo pacman -R qtranscribe
 
 ## Desktop environment support and Wayland notes
 
+For the best experience, use GNOME 48 or above, or KDE Plasma 6 and above. These environments support the global shortcuts portal natively, enabling push-to-talk dictation out of the box without manual keybind setup.
+
+### Input injection and security
+
+QTranscribe has no ability to read, intercept, or log keystrokes. It only has write access to inject transcribed text through a helper daemon writing to `/dev/uinput`.
+
+### Push-to-talk portal support
+
 Push-to-talk mode requires the desktop compositor to implement the `org.freedesktop.portal.GlobalShortcuts` portal interface. The portal delivers press and release events, allowing the app to detect when a key is held down and released. On environments without this portal, dictation works via toggle mode using a custom shortcut mapped to `qtranscribe --toggle`.
 
-| Desktop environment | Status | Global shortcuts portal | Push-to-talk | Notes |
-| :--- | :---: | :---: | :---: | :--- |
-| **KDE Plasma 6** | Supported | Yes (`org.freedesktop.portal.GlobalShortcuts`) | Supported | Native KWallet integration, system Qt theming, and Klipper privacy flags |
-| **GNOME 48+** | Supported | Yes (`org.freedesktop.portal.GlobalShortcuts`) | Supported | Uses GNOME Keyring and Secret Service |
-| **Hyprland** | Supported | Yes (`xdg-desktop-portal-hyprland`) | Supported | Configured through the Hyprland portal backend |
-| **GNOME 46** | Supported | No | Unsupported | Toggle mode only. Map a custom shortcut to `qtranscribe --toggle` in Settings |
-| **COSMIC** (System76) | Supported | No | Unsupported | Toggle mode only. Map a custom shortcut to `qtranscribe --toggle` in Settings |
-| **Sway / wlroots** | Supported | No | Unsupported | Toggle mode only. Bind `qtranscribe --toggle` in your compositor configuration |
+| Desktop environment | Status | Push-to-talk | Notes |
+| :--- | :---: | :---: | :--- |
+| **KDE Plasma 6** | Supported | Supported | Native KWallet integration, system Qt theming, and Klipper privacy flags |
+| **GNOME 48+** | Supported | Supported | Uses GNOME Keyring and Secret Service |
+| **GNOME 46** | Supported | Unsupported | Toggle mode only. Map a custom shortcut to `qtranscribe --toggle` in Settings |
+| **COSMIC** (System76) | Supported | Unsupported | Toggle mode only. Map a custom shortcut to `qtranscribe --toggle` in Settings |
+| **Hyprland** | Supported | Unsupported | Toggle mode only. Bind `qtranscribe --toggle` in `hyprland.conf` |
+| **Sway / wlroots** | Supported | Unsupported | Toggle mode only. Bind `qtranscribe --toggle` in your compositor configuration |
 
 ---
 
@@ -136,8 +143,8 @@ Launch QTranscribe and open **Settings**:
 - **Cloud (Groq):** Get a free API key at [console.groq.com](https://console.groq.com/keys) and paste it under **Cloud & API**. Keys are saved to the system keyring, which prompts for your password to unlock the wallet when needed.
 
 ### 2. Set shortcut
-- **Plasma 6, GNOME 48+, Hyprland:** Approve the portal shortcut prompt on first start. Supports both toggle and push-to-talk.
-- **COSMIC, GNOME 46, Sway:** Bind a custom keyboard shortcut to `qtranscribe --toggle` in your desktop or compositor settings.
+- **Plasma 6, GNOME 48+:** Approve the portal shortcut prompt on first start. Supports both toggle and push-to-talk.
+- **COSMIC, GNOME 46, Hyprland, Sway:** Bind a custom keyboard shortcut to `qtranscribe --toggle` in your desktop or compositor settings.
 
 ### 3. Dictate
 - **Push-to-talk (Portal DEs):** Focus any input field, hold your shortcut, speak, and release.
@@ -159,8 +166,8 @@ Launch QTranscribe and open **Settings**:
   - If using a local development build, ensure capabilities were granted: `sudo setcap cap_dac_override+ep build/keyinjectord`.
   - Run `qtranscribe` in your terminal to view debug logs.
 - **Push-to-talk does not work:**
-  - Push-to-talk requires a desktop environment with `org.freedesktop.portal.GlobalShortcuts` (KDE Plasma 6, GNOME 48+, Hyprland). On GNOME 46, COSMIC, or Sway, use toggle mode with `qtranscribe --toggle`.
-- **Global shortcut does not fire on GNOME 46 or Sway:**
+  - Push-to-talk requires a desktop environment with `org.freedesktop.portal.GlobalShortcuts` (KDE Plasma 6, GNOME 48+). On GNOME 46, COSMIC, Hyprland, or Sway, use toggle mode with `qtranscribe --toggle`.
+- **Global shortcut does not fire on GNOME 46, Hyprland, or Sway:**
   - The desktop portal shortcut interface is not supported on these compositors. Add a native desktop shortcut that executes `qtranscribe --toggle`.
 - **Local model fails to load:**
   - Verify that the model download completed under `~/.local/share/qtranscribe/models/`.

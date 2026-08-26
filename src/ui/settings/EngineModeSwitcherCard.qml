@@ -28,8 +28,7 @@ StyledCard {
                                                                                        Theme.cardBorder)
             border.width: isSelected ? 2 : 1
 
-            readonly property bool isSelected: SpeechController.activeBackend
-                                               === SpeechController.TranscriptionBackend.Groq
+            readonly property bool isSelected: SpeechController.activeBackend === SpeechController.Groq
 
             Behavior on color {
                 ColorAnimation {
@@ -127,8 +126,8 @@ StyledCard {
                 hoverEnabled: true
                 cursorShape: Qt.PointingHandCursor
                 onClicked: {
-                    if (SpeechController.activeBackend !== SpeechController.TranscriptionBackend.Groq) {
-                        SpeechController.activeBackend = SpeechController.TranscriptionBackend.Groq;
+                    if (SpeechController.activeBackend !== SpeechController.Groq) {
+                        SpeechController.activeBackend = SpeechController.Groq;
                     }
                 }
             }
@@ -146,8 +145,7 @@ StyledCard {
                                                                                          Theme.cardBorder)
             border.width: isSelected ? 2 : 1
 
-            readonly property bool isSelected: SpeechController.activeBackend
-                                               === SpeechController.TranscriptionBackend.WhisperCpp
+            readonly property bool isSelected: SpeechController.activeBackend === SpeechController.WhisperCpp
 
             Behavior on color {
                 ColorAnimation {
@@ -245,8 +243,8 @@ StyledCard {
                 hoverEnabled: true
                 cursorShape: Qt.PointingHandCursor
                 onClicked: {
-                    if (SpeechController.activeBackend !== SpeechController.TranscriptionBackend.WhisperCpp) {
-                        SpeechController.activeBackend = SpeechController.TranscriptionBackend.WhisperCpp;
+                    if (SpeechController.activeBackend !== SpeechController.WhisperCpp) {
+                        SpeechController.activeBackend = SpeechController.WhisperCpp;
                     }
                 }
             }

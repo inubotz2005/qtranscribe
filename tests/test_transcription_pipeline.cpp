@@ -318,6 +318,51 @@ private slots:
         QCOMPARE(backendSpy.count(), 2);
     }
 
+    void testTranscriptionBackendDispatchAfterSwitch() {
+        TranscriptionPipeline pipeline;
+        FakeSttClient groqClient;
+        FakeSttClient whisperClient;
+
+        pipeline.registerBackend(TranscriptionPipeline::Backend::Groq, &groqClient);
+        pipeline.registerBackend(TranscriptionPipeline::Backend::WhisperCpp, &whisperClient);
+
+        SpeechController controller;
+        controller.setPipeline(&pipeline);
+        controller.initialize();
+
+        // 1. Switch to WhisperCpp and transcribe
+        controller.setActiveBackend(SpeechController::TranscriptionBackend::WhisperCpp);
+        QCOMPARE(pipeline.activeBackend(), TranscriptionPipeline::Backend::WhisperCpp);
+        QCOMPARE(pipeline.activeSttClient(), &whisperClient);
+
+        pipeline.setState(TranscriptionPipeline::State::Recording);
+        const QByteArray audio1("RIFFwavdata1");
+        QMetaObject::invokeMethod(&pipeline, "onRecordingFinished", Q_ARG(QByteArray, audio1));
+
+        QCOMPARE(whisperClient.m_transcribeCallCount, 1);
+        QCOMPARE(groqClient.m_transcribeCallCount, 0);
+        QCOMPARE(whisperClient.m_lastReceivedWav, audio1);
+
+        whisperClient.simulateSuccess(u"Whisper offline output"_s);
+        QCOMPARE(pipeline.lastTranscription(), u"Whisper offline output"_s);
+
+        // 2. Switch to Groq and transcribe
+        controller.setActiveBackend(SpeechController::TranscriptionBackend::Groq);
+        QCOMPARE(pipeline.activeBackend(), TranscriptionPipeline::Backend::Groq);
+        QCOMPARE(pipeline.activeSttClient(), &groqClient);
+
+        pipeline.setState(TranscriptionPipeline::State::Recording);
+        const QByteArray audio2("RIFFwavdata2");
+        QMetaObject::invokeMethod(&pipeline, "onRecordingFinished", Q_ARG(QByteArray, audio2));
+
+        QCOMPARE(groqClient.m_transcribeCallCount, 1);
+        QCOMPARE(whisperClient.m_transcribeCallCount, 1);
+        QCOMPARE(groqClient.m_lastReceivedWav, audio2);
+
+        groqClient.simulateSuccess(u"Groq cloud output"_s);
+        QCOMPARE(pipeline.lastTranscription(), u"Groq cloud output"_s);
+    }
+
     void initTestCase() {
         qputenv("QT_MEDIA_BACKEND", "null");
     }

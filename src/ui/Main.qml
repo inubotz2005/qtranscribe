@@ -36,7 +36,7 @@ ApplicationWindow {
         case "enhancement":
             return "online";
         case "dictation":
-            return SpeechController.activeBackend === SpeechController.TranscriptionBackend.Groq ? "online" : "offline";
+            return SpeechController.activeBackend === SpeechController.Groq ? "online" : "offline";
         case "activity":
             return "cloudUsage";
         default:
@@ -60,7 +60,7 @@ ApplicationWindow {
     }
 
     function rebuildNavModel() {
-        const isOnline = SpeechController.activeBackend === SpeechController.TranscriptionBackend.Groq;
+        const isOnline = SpeechController.activeBackend === SpeechController.Groq;
         navModel.clear();
 
         navModel.append({
@@ -172,7 +172,7 @@ ApplicationWindow {
         }
         function onActiveBackendChanged() {
             root.rebuildNavModel();
-            if (SpeechController.activeBackend === SpeechController.TranscriptionBackend.Groq) {
+            if (SpeechController.activeBackend === SpeechController.Groq) {
                 if (root.currentSectionId === "offline") {
                     root.currentSectionId = "online";
                 }

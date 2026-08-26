@@ -80,8 +80,7 @@ Item {
             }
 
             StatusBanner {
-                visible: SpeechController.activeBackend === SpeechController.TranscriptionBackend.Groq &&
-                         !GroqApiClient.apiKeySet
+                visible: SpeechController.activeBackend === SpeechController.Groq && !GroqApiClient.apiKeySet
                 bannerType: "warning"
                 title: qsTr("Groq API Key Required")
                 message: qsTr("Configure your free Groq API key in Settings to begin cloud speech transcription.")
@@ -90,9 +89,8 @@ Item {
             }
 
             StatusBanner {
-                visible: SpeechController.activeBackend === SpeechController.TranscriptionBackend.Groq
-                         && GroqApiClient.apiKeySet && GroqSttClient.errorCategory
-                         === GroqSttClient.ErrorCategory.InvalidApiKey
+                visible: SpeechController.activeBackend === SpeechController.Groq && GroqApiClient.apiKeySet
+                         && GroqSttClient.errorCategory === GroqSttClient.InvalidApiKey
                 bannerType: "warning"
                 title: qsTr("Invalid API Key")
                 message: GroqSttClient.lastError.length > 0 ? GroqSttClient.lastError : qsTr(
@@ -104,9 +102,8 @@ Item {
             }
 
             StatusBanner {
-                visible: SpeechController.activeBackend === SpeechController.TranscriptionBackend.Groq
-                         && GroqSttClient.errorCategory === GroqSttClient.ErrorCategory.RateLimited
-                         && GroqSttClient.retrySecondsRemaining > 0
+                visible: SpeechController.activeBackend === SpeechController.Groq && GroqSttClient.errorCategory
+                         === GroqSttClient.RateLimited && GroqSttClient.retrySecondsRemaining > 0
                 bannerType: "warning"
                 title: qsTr("Rate Limit Exceeded")
                 message: qsTr("Auto-retrying in %1s…").arg(GroqSttClient.retrySecondsRemaining)
@@ -115,7 +112,7 @@ Item {
             }
 
             StatusBanner {
-                visible: SpeechController.activeBackend === SpeechController.TranscriptionBackend.WhisperCpp &&
+                visible: SpeechController.activeBackend === SpeechController.WhisperCpp &&
                          !WhisperSttClient.isModelInstalled
                 bannerType: "warning"
                 title: qsTr("Offline Whisper Model Missing")
@@ -125,7 +122,7 @@ Item {
             }
 
             StatusBanner {
-                visible: SpeechController.activeBackend === SpeechController.TranscriptionBackend.WhisperCpp
+                visible: SpeechController.activeBackend === SpeechController.WhisperCpp
                          && WhisperSttClient.isModelInstalled && !WhisperSttClient.isModelLoaded
                 bannerType: "info"
                 title: qsTr("Loading Whisper Model")
@@ -156,15 +153,18 @@ Item {
             }
 
             StatusBanner {
-                visible: SpeechController.dictationState === SpeechController.DictationState.Error && (
-                             SpeechController.activeBackend !== SpeechController.TranscriptionBackend.Groq || (
-                                 GroqSttClient.errorCategory !== GroqSttClient.ErrorCategory.InvalidApiKey && (
-                                     GroqSttClient.errorCategory !== GroqSttClient.ErrorCategory.RateLimited
-                                     || GroqSttClient.retrySecondsRemaining === 0)))
+                visible: SpeechController.dictationState === SpeechController.Error && (SpeechController.activeBackend
+                                                                                        !== SpeechController.Groq || (
+                                                                                            GroqSttClient.errorCategory
+                                                                                            !== GroqSttClient.InvalidApiKey
+                                                                                            && (GroqSttClient.errorCategory
+                                                                                                !== GroqSttClient.RateLimited
+                                                                                                || GroqSttClient.retrySecondsRemaining
+                                                                                                === 0)))
                 bannerType: "danger"
-                title: SpeechController.activeBackend === SpeechController.TranscriptionBackend.WhisperCpp ? qsTr(
-                                                                                                                 "Offline Transcription Failed") :
-                                                                                                             qsTr("Transcription Failed")
+                title: SpeechController.activeBackend === SpeechController.WhisperCpp ? qsTr(
+                                                                                            "Offline Transcription Failed") :
+                                                                                        qsTr("Transcription Failed")
                 message: SpeechController.lastError.length > 0 ? SpeechController.lastError : qsTr(
                                                                      "An error occurred during transcription.")
                 actionText: qsTr("Retry Transcription")

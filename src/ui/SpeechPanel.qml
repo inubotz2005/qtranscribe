@@ -42,7 +42,7 @@ Item {
         clip: true
 
         ColumnLayout {
-            width: parent.width
+            width: speechScrollView.availableWidth
             spacing: Theme.spacingMd
 
             ColumnLayout {
@@ -187,147 +187,152 @@ Item {
                 }
 
                 Item {
-                    Layout.alignment: Qt.AlignHCenter
-                    implicitWidth: 96
+                    Layout.fillWidth: true
                     implicitHeight: 96
 
-                    Rectangle {
-                        anchors.fill: parent
-                        radius: width / 2
-                        color: Theme.colorDanger
-                        opacity: SpeechController.recording ? 0.25 : 0.0
-                        visible: SpeechController.recording
+                    Item {
+                        anchors.centerIn: parent
+                        width: 96
+                        height: 96
 
-                        Behavior on opacity {
-                            NumberAnimation {
-                                duration: Theme.animNormal
+                        Rectangle {
+                            anchors.fill: parent
+                            radius: width / 2
+                            color: Theme.colorDanger
+                            opacity: SpeechController.recording ? 0.25 : 0.0
+                            visible: SpeechController.recording
+
+                            Behavior on opacity {
+                                NumberAnimation {
+                                    duration: Theme.animNormal
+                                }
                             }
-                        }
 
-                        SequentialAnimation on scale {
-                            running: SpeechController.recording
-                            loops: Animation.Infinite
-                            ScaleAnimator {
-                                to: 1.18
-                                duration: 650
-                            }
-                            ScaleAnimator {
-                                to: 1.0
-                                duration: 650
-                            }
-                        }
-                    }
-
-                    Button {
-                        id: recordBtn
-                        anchors.fill: parent
-                        activeFocusOnTab: true
-                        Accessible.role: Accessible.Button
-                        Accessible.name: SpeechController.recording ? qsTr("Stop Dictation") : qsTr("Start Dictation")
-                        Accessible.description: qsTr("Toggle speech recognition recording")
-                        enabled: SpeechController.canRecord
-
-                        background: Rectangle {
-                            radius: recordBtn.width / 2
-                            color: {
-                                if (!recordBtn.enabled)
-                                return Theme.controlBg;
-                                if (SpeechController.recording)
-                                return recordBtn.down ? Theme.buttonDangerBgPressed : (recordBtn.hovered
-                                                                                       ? Theme.buttonDangerBgHover :
-                                                                                         Theme.buttonDangerBg);
-                                if (SpeechController.isBusy)
-                                return Theme.colorWarning;
-                                return recordBtn.down ? Theme.buttonPrimaryBgPressed : (recordBtn.hovered
-                                                                                        ? Theme.buttonPrimaryBgHover :
-                                                                                          Theme.buttonPrimaryBg);
-                            }
-                            border.color: recordBtn.visualFocus ? Theme.focusRingColor : Theme.cardBorder
-                            border.width: recordBtn.visualFocus ? Theme.focusRingWidth : 1
-
-                            Behavior on color {
-                                ColorAnimation {
-                                    duration: Theme.animFast
+                            SequentialAnimation on scale {
+                                running: SpeechController.recording
+                                loops: Animation.Infinite
+                                ScaleAnimator {
+                                    to: 1.18
+                                    duration: 650
+                                }
+                                ScaleAnimator {
+                                    to: 1.0
+                                    duration: 650
                                 }
                             }
                         }
 
-                        contentItem: ColumnLayout {
-                            spacing: 2
-                            anchors.centerIn: parent
+                        Button {
+                            id: recordBtn
+                            anchors.fill: parent
+                            activeFocusOnTab: true
+                            Accessible.role: Accessible.Button
+                            Accessible.name: SpeechController.recording ? qsTr("Stop Dictation") : qsTr(
+                                                                              "Start Dictation")
+                            Accessible.description: qsTr("Toggle speech recognition recording")
+                            enabled: SpeechController.canRecord
 
-                            Item {
-                                Layout.alignment: Qt.AlignHCenter
-                                implicitWidth: 28
-                                implicitHeight: 28
-
-                                Image {
-                                    anchors.centerIn: parent
-                                    width: 24
-                                    height: 24
-                                    source: "qrc:/qt/qml/QTranscribe/assets/icons/mic.svg"
-                                    sourceSize.width: 24
-                                    sourceSize.height: 24
-                                    visible: !SpeechController.recording && !SpeechController.isBusy
-                                    smooth: true
+                            background: Rectangle {
+                                radius: recordBtn.width / 2
+                                color: {
+                                    if (!recordBtn.enabled)
+                                    return Theme.controlBg;
+                                    if (SpeechController.recording)
+                                    return recordBtn.down ? Theme.buttonDangerBgPressed : (recordBtn.hovered
+                                                                                           ? Theme.buttonDangerBgHover :
+                                                                                             Theme.buttonDangerBg);
+                                    if (SpeechController.isBusy)
+                                    return Theme.colorWarning;
+                                    return recordBtn.down ? Theme.buttonPrimaryBgPressed : (recordBtn.hovered
+                                                                                            ? Theme.buttonPrimaryBgHover :
+                                                                                              Theme.buttonPrimaryBg);
                                 }
+                                border.color: recordBtn.visualFocus ? Theme.focusRingColor : Theme.cardBorder
+                                border.width: recordBtn.visualFocus ? Theme.focusRingWidth : 1
 
-                                Image {
-                                    anchors.centerIn: parent
-                                    width: 22
-                                    height: 22
-                                    source: "qrc:/qt/qml/QTranscribe/assets/icons/stop.svg"
-                                    sourceSize.width: 22
-                                    sourceSize.height: 22
-                                    visible: SpeechController.recording
-                                    smooth: true
-                                }
-
-                                Image {
-                                    anchors.centerIn: parent
-                                    width: 24
-                                    height: 24
-                                    source: "qrc:/qt/qml/QTranscribe/assets/icons/spinner.svg"
-                                    sourceSize.width: 24
-                                    sourceSize.height: 24
-                                    visible: SpeechController.isBusy
-                                    smooth: true
-
-                                    RotationAnimation on rotation {
-                                        running: SpeechController.isBusy
-                                        loops: Animation.Infinite
-                                        from: 0
-                                        to: 360
-                                        duration: 1000
+                                Behavior on color {
+                                    ColorAnimation {
+                                        duration: Theme.animFast
                                     }
                                 }
                             }
 
-                            StyledText {
-                                text: SpeechController.recording ? qsTr("Stop") : (SpeechController.isBusy ? qsTr(
-                                                                                                                 "Processing…") :
-                                                                                                             qsTr("Record"))
-                                variant: "caption"
-                                customWeight: Font.DemiBold
-                                colorRole: "onAccent"
-                                Layout.alignment: Qt.AlignHCenter
-                                horizontalAlignment: Text.AlignHCenter
-                            }
-                        }
+                            contentItem: ColumnLayout {
+                                spacing: 2
+                                anchors.centerIn: parent
 
-                        onClicked: {
-                            if (!SpeechController.recording && TextInjectorClient.clipboardWarningRequired) {
-                                clipboardWarningDialog.open();
-                            } else {
-                                SpeechController.toggleRecording();
+                                Item {
+                                    Layout.alignment: Qt.AlignHCenter
+                                    implicitWidth: 28
+                                    implicitHeight: 28
+
+                                    Image {
+                                        anchors.centerIn: parent
+                                        width: 24
+                                        height: 24
+                                        source: "qrc:/qt/qml/QTranscribe/assets/icons/mic.svg"
+                                        sourceSize.width: 24
+                                        sourceSize.height: 24
+                                        visible: !SpeechController.recording && !SpeechController.isBusy
+                                        smooth: true
+                                    }
+
+                                    Image {
+                                        anchors.centerIn: parent
+                                        width: 22
+                                        height: 22
+                                        source: "qrc:/qt/qml/QTranscribe/assets/icons/stop.svg"
+                                        sourceSize.width: 22
+                                        sourceSize.height: 22
+                                        visible: SpeechController.recording
+                                        smooth: true
+                                    }
+
+                                    Image {
+                                        anchors.centerIn: parent
+                                        width: 24
+                                        height: 24
+                                        source: "qrc:/qt/qml/QTranscribe/assets/icons/spinner.svg"
+                                        sourceSize.width: 24
+                                        sourceSize.height: 24
+                                        visible: SpeechController.isBusy
+                                        smooth: true
+
+                                        RotationAnimation on rotation {
+                                            running: SpeechController.isBusy
+                                            loops: Animation.Infinite
+                                            from: 0
+                                            to: 360
+                                            duration: 1000
+                                        }
+                                    }
+                                }
+
+                                StyledText {
+                                    text: SpeechController.recording ? qsTr("Stop") : (SpeechController.isBusy ? qsTr(
+                                                                                                                     "Processing…") :
+                                                                                                                 qsTr("Record"))
+                                    variant: "caption"
+                                    customWeight: Font.DemiBold
+                                    colorRole: "onAccent"
+                                    Layout.alignment: Qt.AlignHCenter
+                                    horizontalAlignment: Text.AlignHCenter
+                                }
+                            }
+
+                            onClicked: {
+                                if (!SpeechController.recording && TextInjectorClient.clipboardWarningRequired) {
+                                    clipboardWarningDialog.open();
+                                } else {
+                                    SpeechController.toggleRecording();
+                                }
                             }
                         }
                     }
                 }
 
                 Item {
-                    Layout.alignment: Qt.AlignHCenter
-                    implicitWidth: 120
+                    Layout.fillWidth: true
                     implicitHeight: 32
                     visible: SpeechController.recording
 
@@ -391,95 +396,104 @@ Item {
                     visible: audioStatusText.text.length > 0
                 }
 
-                Rectangle {
-                    id: systemStatusPill
+                Item {
+                    id: systemStatusContainer
                     visible: SpeechController.systemShortcutHasIssue || SpeechController.directTypingHasIssue
-                    Layout.alignment: Qt.AlignHCenter
+                    Layout.fillWidth: true
                     implicitHeight: 32
-                    implicitWidth: footerStatusRow.implicitWidth + (Theme.spacingMd * 2)
-                    radius: Theme.radiusCircle
-                    color: Theme.cardBgSubtle
-                    border.color: Theme.cardBorder
-                    border.width: 1
 
-                    RowLayout {
-                        id: footerStatusRow
+                    Rectangle {
+                        id: systemStatusPill
                         anchors.centerIn: parent
-                        spacing: Theme.spacingMd
+                        implicitHeight: 32
+                        implicitWidth: footerStatusRow.implicitWidth + (Theme.spacingMd * 2)
+                        radius: Theme.radiusCircle
+                        color: Theme.cardBgSubtle
+                        border.color: Theme.cardBorder
+                        border.width: 1
 
                         RowLayout {
-                            id: shortcutStatusRow
-                            visible: SpeechController.systemShortcutHasIssue
-                            spacing: 6
+                            id: footerStatusRow
+                            anchors.centerIn: parent
+                            spacing: Theme.spacingMd
 
-                            StyledIcon {
-                                source: "qrc:/qt/qml/QTranscribe/assets/icons/keyboard.svg"
-                                size: 14
-                                color: Theme.textSecondary
-                                Layout.alignment: Qt.AlignVCenter
-                                opacity: 0.8
+                            RowLayout {
+                                id: shortcutStatusRow
+                                visible: SpeechController.systemShortcutHasIssue
+                                spacing: 6
+
+                                StyledIcon {
+                                    source: "qrc:/qt/qml/QTranscribe/assets/icons/keyboard.svg"
+                                    size: 14
+                                    color: Theme.textSecondary
+                                    Layout.alignment: Qt.AlignVCenter
+                                    opacity: 0.8
+                                }
+
+                                Rectangle {
+                                    implicitWidth: 6
+                                    implicitHeight: 6
+                                    radius: 3
+                                    Layout.alignment: Qt.AlignVCenter
+                                    color: SpeechController.systemShortcutSupported ? Theme.colorWarning :
+                                                                                      Theme.colorDanger
+                                }
+
+                                StyledText {
+                                    text: SpeechController.systemShortcutStatus.length > 0
+                                          ? SpeechController.systemShortcutStatus : qsTr("Global shortcut unavailable")
+                                    variant: "caption"
+                                    colorRole: "secondary"
+                                    Layout.alignment: Qt.AlignVCenter
+                                }
+
+                                StyledButton {
+                                    id: setupGuideBtn
+                                    text: qsTr("Setup Guide")
+                                    visible: !SpeechController.systemShortcutSupported
+                                    variant: "flat"
+                                    size: "small"
+                                    onClicked: shortcutGuideDialog.open()
+                                }
                             }
 
-                            Rectangle {
-                                implicitWidth: 6
-                                implicitHeight: 6
-                                radius: 3
-                                Layout.alignment: Qt.AlignVCenter
-                                color: SpeechController.systemShortcutSupported ? Theme.colorWarning : Theme.colorDanger
-                            }
-
-                            StyledText {
-                                text: SpeechController.systemShortcutStatus.length > 0
-                                      ? SpeechController.systemShortcutStatus : qsTr("Global shortcut unavailable")
-                                variant: "caption"
-                                colorRole: "secondary"
+                            StyledDivider {
+                                id: statusDivider
+                                visible: SpeechController.systemShortcutHasIssue
+                                         && SpeechController.directTypingHasIssue
+                                orientation: Qt.Vertical
+                                implicitHeight: 14
                                 Layout.alignment: Qt.AlignVCenter
                             }
 
-                            StyledButton {
-                                id: setupGuideBtn
-                                text: qsTr("Setup Guide")
-                                visible: !SpeechController.systemShortcutSupported
-                                variant: "flat"
-                                size: "small"
-                                onClicked: shortcutGuideDialog.open()
-                            }
-                        }
+                            RowLayout {
+                                id: directTypingStatusRow
+                                visible: SpeechController.directTypingHasIssue
+                                spacing: 6
 
-                        StyledDivider {
-                            id: statusDivider
-                            visible: SpeechController.systemShortcutHasIssue && SpeechController.directTypingHasIssue
-                            orientation: Qt.Vertical
-                            implicitHeight: 14
-                            Layout.alignment: Qt.AlignVCenter
-                        }
+                                StyledIcon {
+                                    source: "qrc:/qt/qml/QTranscribe/assets/icons/bolt.svg"
+                                    size: 13
+                                    color: Theme.textSecondary
+                                    Layout.alignment: Qt.AlignVCenter
+                                    opacity: 0.8
+                                }
 
-                        RowLayout {
-                            id: directTypingStatusRow
-                            visible: SpeechController.directTypingHasIssue
-                            spacing: 6
+                                Rectangle {
+                                    implicitWidth: 6
+                                    implicitHeight: 6
+                                    radius: 3
+                                    Layout.alignment: Qt.AlignVCenter
+                                    color: SpeechController.directTypingFatalError ? Theme.colorDanger :
+                                                                                     Theme.colorWarning
+                                }
 
-                            StyledIcon {
-                                source: "qrc:/qt/qml/QTranscribe/assets/icons/bolt.svg"
-                                size: 13
-                                color: Theme.textSecondary
-                                Layout.alignment: Qt.AlignVCenter
-                                opacity: 0.8
-                            }
-
-                            Rectangle {
-                                implicitWidth: 6
-                                implicitHeight: 6
-                                radius: 3
-                                Layout.alignment: Qt.AlignVCenter
-                                color: SpeechController.directTypingFatalError ? Theme.colorDanger : Theme.colorWarning
-                            }
-
-                            StyledText {
-                                text: SpeechController.directTypingStatus
-                                variant: "caption"
-                                colorRole: "secondary"
-                                Layout.alignment: Qt.AlignVCenter
+                                StyledText {
+                                    text: SpeechController.directTypingStatus
+                                    variant: "caption"
+                                    colorRole: "secondary"
+                                    Layout.alignment: Qt.AlignVCenter
+                                }
                             }
                         }
                     }

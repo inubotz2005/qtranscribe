@@ -173,7 +173,7 @@ Focus any input field, hit your shortcut, speak, and press it again to finish. T
 
 ## Roadmap
 
-- [ ] **Encrypted file fallback for API keys.** Fallback storage mechanism when system keyring / Secret Service is unavailable.
+- [x] **Encrypted file fallback for API keys.** Fallback storage mechanism when system keyring / Secret Service is unavailable.
 - [ ] **Push-to-talk mode.** Hold shortcut to record, release to transcribe and type.
 - [ ] **Improved clipboard restoration.** Better handling for non-KDE environments that lack integrated clipboard managers.
 - [ ] **Audio file transcription.** Upload and transcribe local audio recordings directly from the UI or CLI.
@@ -235,8 +235,8 @@ Docker build scripts live in [`packaging/`](packaging/):
 <summary><strong>Debian and Ubuntu (.deb)</strong></summary>
 
 ```bash
-./packaging/deb/build-deb.sh 24.04 1.0.0
-sudo apt install ./dist/deb/qtranscribe_1.0.0_amd64.deb
+./packaging/deb/build-deb.sh 24.04 1.1.0
+sudo apt install ./dist/deb/qtranscribe_1.1.0_amd64.deb
 ```
 </details>
 
@@ -244,8 +244,8 @@ sudo apt install ./dist/deb/qtranscribe_1.0.0_amd64.deb
 <summary><strong>Fedora and RHEL RPM (.rpm)</strong></summary>
 
 ```bash
-./packaging/rpm/build-rpm.sh 44 1.0.0 1
-sudo dnf install ./dist/rpm/qtranscribe-1.0.0-1.fc44.x86_64.rpm
+./packaging/rpm/build-rpm.sh 44 1.1.0 1
+sudo dnf install ./dist/rpm/qtranscribe-1.1.0-1.fc44.x86_64.rpm
 ```
 </details>
 
@@ -253,7 +253,7 @@ sudo dnf install ./dist/rpm/qtranscribe-1.0.0-1.fc44.x86_64.rpm
 <summary><strong>Arch Linux (.pkg.tar.zst)</strong></summary>
 
 ```bash
-./packaging/arch/build-arch.sh 1.0.0 1
-sudo pacman -U ./dist/arch/qtranscribe-1.0.0-1-x86_64.pkg.tar.zst
+./packaging/arch/build-arch.sh 1.1.0 1
+sudo pacman -U ./dist/arch/qtranscribe-1.1.0-1-x86_64.pkg.tar.zst
 ```
 </details>

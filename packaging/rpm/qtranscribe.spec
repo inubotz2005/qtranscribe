@@ -1,7 +1,7 @@
 %global debug_package %{nil}
 
 Name:           qtranscribe
-Version:        %{?version}%{!?version:1.0.0}
+Version:        %{?version}%{!?version:1.1.0}
 Release:        %{?release}%{!?release:1}%{?dist}
 Summary:        Fast and modern speech-to-text desktop application
 
@@ -72,5 +72,8 @@ QT_QPA_PLATFORM=offscreen %ctest
 %{_datadir}/icons/hicolor/*/status/qtranscribe-tray*.svg
 
 %changelog
+* Wed Aug 26 2026 QTranscribe Developers <support@qtranscribe.org> - 1.1.0-1
+- Release v1.1.0
+
 * Tue Aug 18 2026 QTranscribe Developers <support@qtranscribe.org> - 1.0.0-1
 - Initial public release of QTranscribe for Fedora RPM

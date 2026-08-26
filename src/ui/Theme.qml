@@ -50,7 +50,28 @@ QtObject {
         colorGroup: SystemPalette.Active
     }
 
-    readonly property color systemAccent: (_sysPalette.accent.a > 0.01) ? _sysPalette.accent : _sysPalette.highlight
+    function isValidAccent(c: color): bool {
+        if (!c || c.a < 0.5)
+            return false;
+        if ((c.r + c.g + c.b) < 0.2 || (c.r > 0.95 && c.g > 0.95 && c.b > 0.95))
+            return false;
+        if (c.hslLightness < 0.15 || c.hslLightness > 0.92)
+            return false;
+        if (c.hslSaturation < 0.15 && Math.abs(c.r - c.g) < 0.05 && Math.abs(c.g - c.b) < 0.05)
+            return false;
+        return true;
+    }
+
+    readonly property color defaultAccent: isDark ? "#3584E4" : "#1C71D8"
+    readonly property color systemAccent: {
+        if (isValidAccent(ColorUtils.accentColor))
+        return ColorUtils.accentColor;
+        if (isValidAccent(_sysPalette.accent))
+        return _sysPalette.accent;
+        if (isValidAccent(_sysPalette.highlight))
+        return _sysPalette.highlight;
+        return defaultAccent;
+    }
     readonly property color accentColor: systemAccent
     readonly property color accentColorHover: ColorUtils.tint(accentColor, isDark ? "#26ffffff" : "#1a000000")
     readonly property color accentColorPressed: ColorUtils.tint(accentColor, "#33000000")

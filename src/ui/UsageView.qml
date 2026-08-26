@@ -245,62 +245,55 @@ Item {
                     Layout.bottomMargin: Theme.spacingXs
                 }
 
-                ColumnLayout {
+                GridLayout {
                     Layout.fillWidth: true
-                    spacing: Theme.spacingSm
+                    columns: root.width >= 600 ? 3 : 2
+                    columnSpacing: Theme.spacingMd
+                    rowSpacing: Theme.spacingSm
                     visible: GroqUsageTracker.lastUpdatedTimestamp.length > 0
 
-                    RowLayout {
+                    MetricCard {
                         Layout.fillWidth: true
-                        spacing: Theme.spacingMd
+                        title: qsTr("Task")
+                        value: GroqUsageTracker.lastEndpoint
+                        valuePixelSize: Theme.fontSizeBody
+                    }
 
-                        MetricCard {
-                            Layout.fillWidth: true
-                            title: qsTr("Task")
-                            value: GroqUsageTracker.lastEndpoint
-                            valuePixelSize: Theme.fontSizeBody
+                    MetricCard {
+                        Layout.fillWidth: true
+                        title: qsTr("Model")
+                        value: GroqUsageTracker.lastModel.length > 0 ? GroqUsageTracker.lastModel : qsTr("Default")
+                        valuePixelSize: Theme.fontSizeBody
+                    }
+
+                    ColumnLayout {
+                        Layout.fillWidth: true
+                        spacing: 2
+
+                        StyledText {
+                            text: qsTr("Status")
+                            variant: "caption"
+                            colorRole: "secondary"
                         }
 
-                        MetricCard {
-                            Layout.fillWidth: true
-                            title: qsTr("Model")
-                            value: GroqUsageTracker.lastModel.length > 0 ? GroqUsageTracker.lastModel : qsTr("Default")
-                            valuePixelSize: Theme.fontSizeBody
-                        }
-
-                        ColumnLayout {
-                            spacing: 2
-
-                            StyledText {
-                                text: qsTr("Status")
-                                variant: "caption"
-                                colorRole: "secondary"
-                            }
-
-                            StateBadge {
-                                text: qsTr("HTTP %1").arg(GroqUsageTracker.lastHttpStatus)
-                                statusType: GroqUsageTracker.lastHttpStatus === 200 ? "success" : "danger"
-                            }
+                        StateBadge {
+                            text: qsTr("HTTP %1").arg(GroqUsageTracker.lastHttpStatus)
+                            statusType: GroqUsageTracker.lastHttpStatus === 200 ? "success" : "danger"
                         }
                     }
 
-                    RowLayout {
+                    MetricCard {
                         Layout.fillWidth: true
-                        spacing: Theme.spacingMd
+                        title: qsTr("Latency")
+                        value: qsTr("%1 ms").arg(GroqUsageTracker.lastLatencyMs)
+                        valuePixelSize: Theme.fontSizeBody
+                    }
 
-                        MetricCard {
-                            Layout.fillWidth: true
-                            title: qsTr("Latency")
-                            value: qsTr("%1 ms").arg(GroqUsageTracker.lastLatencyMs)
-                            valuePixelSize: Theme.fontSizeBody
-                        }
-
-                        MetricCard {
-                            Layout.fillWidth: true
-                            title: qsTr("Time")
-                            value: GroqUsageTracker.lastUpdatedTimestamp
-                            valuePixelSize: Theme.fontSizeBody
-                        }
+                    MetricCard {
+                        Layout.fillWidth: true
+                        title: qsTr("Time")
+                        value: GroqUsageTracker.lastUpdatedTimestamp
+                        valuePixelSize: Theme.fontSizeBody
                     }
                 }
 

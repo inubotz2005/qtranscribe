@@ -88,6 +88,7 @@ Rectangle {
             id: contentContainer
             Layout.fillWidth: true
             Layout.fillHeight: true
+            Layout.alignment: Qt.AlignHCenter
             spacing: Theme.spacingSm
         }
     }

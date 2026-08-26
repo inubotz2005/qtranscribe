@@ -178,6 +178,7 @@ Item {
                                 Behavior on width {
                                     NumberAnimation {
                                         duration: 60
+                                        easing.type: Easing.OutQuad
                                     }
                                 }
                             }

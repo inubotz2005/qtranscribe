@@ -16,6 +16,7 @@ class ColorUtils : public QObject {
     Q_PROPERTY(bool isDark READ isDark NOTIFY isDarkChanged FINAL)
     Q_PROPERTY(bool systemThemeIsDark READ systemThemeIsDark NOTIFY systemThemeChanged FINAL)
     Q_PROPERTY(QString systemThemeName READ systemThemeName NOTIFY systemThemeChanged FINAL)
+    Q_PROPERTY(QColor accentColor READ accentColor NOTIFY systemThemeChanged FINAL)
 
 public:
     explicit ColorUtils(QObject* parent = nullptr);
@@ -26,6 +27,7 @@ public:
     [[nodiscard]] bool isDark() const;
     [[nodiscard]] bool systemThemeIsDark() const;
     [[nodiscard]] QString systemThemeName() const;
+    [[nodiscard]] QColor accentColor() const;
 
     Q_INVOKABLE static QColor withAlpha(const QColor& baseColor, qreal alpha);
     Q_INVOKABLE static QColor tint(const QColor& baseColor, const QColor& tintColor);

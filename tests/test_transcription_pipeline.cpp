@@ -7,6 +7,7 @@
 #include "AudioRecorder.h"
 #include "GroqApiClient.h"
 #include "GroqLlmClient.h"
+#include "SpeechController.h"
 #include "TranscriptionPipeline.h"
 
 using namespace Qt::StringLiterals;
@@ -278,6 +279,43 @@ private slots:
         QCOMPARE(pipeline.state(), TranscriptionPipeline::State::Idle);
         QCOMPARE(pipeline.isBusy(), false);
         QCOMPARE(pipeline.lastTranscription(), u"Raw local offline text"_s);
+    }
+
+    void testSpeechControllerBackendDefault() {
+        SpeechController controller;
+        // Default when no settings are set and pipeline is null should be WhisperCpp
+        QCOMPARE(controller.activeBackend(), SpeechController::TranscriptionBackend::WhisperCpp);
+
+        TranscriptionPipeline pipeline;
+        QSignalSpy backendSpy(&controller, &SpeechController::activeBackendChanged);
+        controller.setPipeline(&pipeline);
+
+        QCOMPARE(backendSpy.count(), 1);
+        QCOMPARE(controller.activeBackend(), SpeechController::TranscriptionBackend::WhisperCpp);
+    }
+
+    void testSpeechControllerBackendSwitching() {
+        TranscriptionPipeline pipeline;
+        FakeSttClient groqClient;
+        FakeSttClient whisperClient;
+
+        pipeline.registerBackend(TranscriptionPipeline::Backend::Groq, &groqClient);
+        pipeline.registerBackend(TranscriptionPipeline::Backend::WhisperCpp, &whisperClient);
+
+        SpeechController controller;
+        controller.setPipeline(&pipeline);
+
+        QSignalSpy backendSpy(&controller, &SpeechController::activeBackendChanged);
+
+        controller.setActiveBackend(SpeechController::TranscriptionBackend::Groq);
+        QCOMPARE(controller.activeBackend(), SpeechController::TranscriptionBackend::Groq);
+        QCOMPARE(pipeline.activeBackend(), TranscriptionPipeline::Backend::Groq);
+        QCOMPARE(backendSpy.count(), 1);
+
+        controller.setActiveBackend(SpeechController::TranscriptionBackend::WhisperCpp);
+        QCOMPARE(controller.activeBackend(), SpeechController::TranscriptionBackend::WhisperCpp);
+        QCOMPARE(pipeline.activeBackend(), TranscriptionPipeline::Backend::WhisperCpp);
+        QCOMPARE(backendSpy.count(), 2);
     }
 
     void initTestCase() {

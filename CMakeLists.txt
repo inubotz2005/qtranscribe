@@ -25,7 +25,7 @@ set(CMAKE_BUILD_WITH_INSTALL_RPATH FALSE)
 set(CMAKE_INSTALL_RPATH_USE_LINK_PATH TRUE)
 set(CMAKE_RUNTIME_OUTPUT_DIRECTORY "${CMAKE_BINARY_DIR}")
 
-find_package(Qt6 6.11 REQUIRED COMPONENTS Gui Qml Quick QuickControls2 Network Multimedia DBus Widgets WaylandClient QuickEffects)
+find_package(Qt6 6.11 REQUIRED COMPONENTS Gui Qml Quick QuickControls2 Network Multimedia DBus WaylandClient QuickEffects)
 find_package(Qt6Keychain REQUIRED)
 
 qt_standard_project_setup(REQUIRES 6.11)
@@ -100,7 +100,7 @@ target_link_libraries(qtranscribe
 
 target_precompile_headers(qtranscribe
     PRIVATE
-        <QApplication>
+        <QGuiApplication>
         <QQmlApplicationEngine>
         <QIcon>
 )

@@ -13,9 +13,9 @@
 #include "WhisperModelManager.h"
 #include "WhisperSttClient.h"
 
-#include <QApplication>
 #include <QCommandLineOption>
 #include <QCommandLineParser>
+#include <QGuiApplication>
 #include <QIcon>
 #include <QQmlApplicationEngine>
 #include <QQuickStyle>
@@ -38,7 +38,7 @@ int main(int argc, char* argv[]) {
         qputenv("QT_QPA_PLATFORM", "wayland");
     }
 
-    QApplication app(argc, argv);
+    QGuiApplication app(argc, argv);
     if (qEnvironmentVariableIsEmpty("QT_QUICK_CONTROLS_STYLE")) {
         QQuickStyle::setStyle(u"Fusion"_s);
         QQuickStyle::setFallbackStyle(u"Fusion"_s);
@@ -93,11 +93,11 @@ int main(int argc, char* argv[]) {
 
     QQmlApplicationEngine engine;
 
+    QObject::connect(&engine, &QQmlEngine::quit, []() { QCoreApplication::exit(0); });
+
     QObject::connect(
         &engine, &QQmlApplicationEngine::objectCreationFailed, &app, []() { QCoreApplication::exit(-1); },
         Qt::QueuedConnection);
-
-    engine.loadFromModule("QTranscribe", "Main");
 
     auto* api = engine.singletonInstance<GroqApiClient*>("QTranscribe", "GroqApiClient");
     auto* stt = engine.singletonInstance<GroqSttClient*>("QTranscribe", "GroqSttClient");
@@ -137,10 +137,13 @@ int main(int argc, char* argv[]) {
         controller->setTextInjector(injector);
         controller->setHistoryModel(history);
         controller->initialize();
+        QObject::connect(controller, &SpeechController::requestQuitApp, []() { QCoreApplication::exit(0); });
 
         auto* dbus = new DBusService(&app);
         dbus->registerController(controller);
     }
+
+    engine.loadFromModule("QTranscribe", "Main");
 
     if (parser.isSet(toggleOption) || parser.isSet(startOption)) {
         QTimer::singleShot(200ms, [controller]() {

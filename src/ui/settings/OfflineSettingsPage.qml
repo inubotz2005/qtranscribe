@@ -312,9 +312,11 @@ Item {
                             anchors.margins: Theme.spacingSm
                             spacing: Theme.spacingXs
 
-                            RowLayout {
+                            GridLayout {
                                 Layout.fillWidth: true
-                                spacing: Theme.spacingSm
+                                columns: root.width >= 540 ? 3 : 1
+                                columnSpacing: Theme.spacingSm
+                                rowSpacing: Theme.spacingXs
 
                                 ColumnLayout {
                                     Layout.fillWidth: true
@@ -361,6 +363,7 @@ Item {
                                             colorRole: "secondary"
                                             elide: Text.ElideRight
                                             Layout.maximumWidth: 150
+                                            visible: root.width >= 480
                                         }
 
                                         Item {
@@ -383,12 +386,14 @@ Item {
                                     text: qsTr("Active")
                                     statusType: "accent"
                                     visible: modelRow.isSelected
+                                    Layout.alignment: root.width >= 540 ? Qt.AlignVCenter : Qt.AlignLeft
                                 }
 
                                 StateBadge {
                                     text: qsTr("Installed")
                                     statusType: "neutral"
                                     visible: modelRow.isInstalled && !modelRow.isSelected && !modelRow.isDownloading
+                                    Layout.alignment: root.width >= 540 ? Qt.AlignVCenter : Qt.AlignLeft
                                 }
 
                                 StateBadge {
@@ -397,11 +402,12 @@ Item {
                                     visible: modelRow.isDownloading
                                     showDot: true
                                     pulsing: true
+                                    Layout.alignment: root.width >= 540 ? Qt.AlignVCenter : Qt.AlignLeft
                                 }
 
                                 RowLayout {
                                     spacing: Theme.spacingXs
-                                    Layout.alignment: Qt.AlignVCenter
+                                    Layout.alignment: root.width >= 540 ? Qt.AlignVCenter : Qt.AlignLeft
 
                                     StyledButton {
                                         text: qsTr("Cancel")

@@ -120,7 +120,6 @@ target_link_libraries(qtranscribe_ui
         Qt6::Quick
         Qt6::QuickControls2
         Qt6::QuickEffects
-        Qt6::Widgets
 )
 
 target_precompile_headers(qtranscribe_ui

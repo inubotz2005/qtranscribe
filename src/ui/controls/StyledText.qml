@@ -42,6 +42,8 @@ Text {
 
     font.family: root.fontFamily === "mono" ? "Monospace" : ""
 
+    linkColor: Theme.accentColor
+
     color: {
         if (root.customColor.a > 0.001)
         return root.customColor;
@@ -49,7 +51,7 @@ Text {
         return Theme.textSecondary;
         if (root.colorRole === "tertiary")
         return Theme.textTertiary;
-        if (root.colorRole === "accent")
+        if (root.colorRole === "accent" || root.colorRole === "link")
         return Theme.accentColor;
         if (root.colorRole === "danger")
         return Theme.colorDanger;

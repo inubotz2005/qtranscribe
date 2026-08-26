@@ -122,6 +122,7 @@ StyledCard {
                 Behavior on width {
                     NumberAnimation {
                         duration: Theme.animNormal
+                        easing.type: Easing.OutCubic
                     }
                 }
             }

@@ -64,6 +64,14 @@ void SpeechController::setPipeline(TranscriptionPipeline* pipeline) {
                 &SpeechController::llmFallbackWarningTriggered);
     }
 
+    emit activeBackendChanged();
+    emit dictationStateChanged();
+    emit recordingChanged();
+    emit transcribingChanged();
+    emit enhancingChanged();
+    emit lastTranscriptionChanged();
+    emit statusMessageChanged();
+    emit lastErrorChanged();
     updatePresenterState();
 }
 
@@ -137,7 +145,12 @@ void SpeechController::setHistoryModel(TranscriptionModel* model) {
 
 SpeechController::TranscriptionBackend SpeechController::activeBackend() const {
     if (!m_pipeline) {
-        return TranscriptionBackend::Groq;
+        QSettings settings;
+        const QString backendStr = settings.value(u"Speech/Backend"_s, u"WhisperCpp"_s).toString();
+        if (backendStr == u"Groq"_s) {
+            return TranscriptionBackend::Groq;
+        }
+        return TranscriptionBackend::WhisperCpp;
     }
     return static_cast<TranscriptionBackend>(m_pipeline->activeBackend());
 }
@@ -145,6 +158,11 @@ SpeechController::TranscriptionBackend SpeechController::activeBackend() const {
 void SpeechController::setActiveBackend(TranscriptionBackend backend) {
     if (m_pipeline) {
         m_pipeline->setActiveBackend(static_cast<TranscriptionPipeline::Backend>(backend));
+    } else {
+        QSettings settings;
+        settings.setValue(u"Speech/Backend"_s,
+                          backend == TranscriptionBackend::WhisperCpp ? u"WhisperCpp"_s : u"Groq"_s);
+        emit activeBackendChanged();
     }
 }
 

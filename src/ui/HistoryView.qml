@@ -42,7 +42,9 @@ Item {
             StyledTextField {
                 id: searchField
                 placeholderText: qsTr("Search history…")
-                Layout.preferredWidth: 220
+                Layout.fillWidth: true
+                Layout.maximumWidth: 260
+                Layout.minimumWidth: 140
                 isSearchPill: true
                 onTextChanged: TranscriptionModel.searchFilter = text
             }
@@ -88,7 +90,7 @@ Item {
                             colorRole: "secondary"
                             verticalAlignment: Text.AlignVCenter
                             Layout.alignment: Qt.AlignVCenter
-                            Layout.preferredWidth: 130
+                            Layout.preferredWidth: root.width < 500 ? 95 : 130
                         }
 
                         StyledText {
@@ -125,6 +127,39 @@ Item {
                     reuseItems: true
                     boundsBehavior: Flickable.StopAtBounds
 
+                    add: Transition {
+                        NumberAnimation {
+                            property: "opacity"
+                            from: 0
+                            to: 1
+                            duration: Theme.animNormal
+                            easing.type: Easing.OutCubic
+                        }
+                        NumberAnimation {
+                            property: "y"
+                            from: -16
+                            duration: Theme.animNormal
+                            easing.type: Easing.OutCubic
+                        }
+                    }
+
+                    remove: Transition {
+                        NumberAnimation {
+                            property: "opacity"
+                            to: 0
+                            duration: Theme.animFast
+                            easing.type: Easing.InCubic
+                        }
+                    }
+
+                    displaced: Transition {
+                        NumberAnimation {
+                            properties: "y"
+                            duration: Theme.animNormal
+                            easing.type: Easing.OutCubic
+                        }
+                    }
+
                     delegate: Rectangle {
                         id: delegateItem
                         required property int index
@@ -154,7 +189,7 @@ Item {
                                 variant: "caption"
                                 colorRole: "secondary"
                                 verticalAlignment: Text.AlignVCenter
-                                Layout.preferredWidth: 130
+                                Layout.preferredWidth: root.width < 500 ? 95 : 130
                                 Layout.alignment: Qt.AlignVCenter
                             }
 

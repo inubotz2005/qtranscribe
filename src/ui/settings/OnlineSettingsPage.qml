@@ -287,6 +287,25 @@ Item {
                             text: qsTr("Show")
                             font.pixelSize: Theme.fontSizeCaption
 
+                            indicator: Rectangle {
+                                implicitWidth: 16
+                                implicitHeight: 16
+                                x: showKeyCheck.leftPadding
+                                y: parent.height / 2 - height / 2
+                                radius: Theme.radiusXs
+                                color: showKeyCheck.checked ? Theme.accentColor : Theme.controlBg
+                                border.color: showKeyCheck.checked ? Theme.accentColor : Theme.controlBorder
+                                border.width: 1
+
+                                StyledIcon {
+                                    anchors.centerIn: parent
+                                    source: "qrc:/qt/qml/QTranscribe/assets/icons/check.svg"
+                                    size: 10
+                                    color: Theme.textOnAccent
+                                    visible: showKeyCheck.checked
+                                }
+                            }
+
                             contentItem: StyledText {
                                 text: showKeyCheck.text
                                 variant: "caption"

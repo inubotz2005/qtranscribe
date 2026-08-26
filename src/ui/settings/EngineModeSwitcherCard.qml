@@ -10,9 +10,11 @@ StyledCard {
     title: qsTr("Transcription Engine")
     description: qsTr("Select between fast Cloud-based AI transcription and private On-Device inference")
 
-    RowLayout {
+    GridLayout {
         Layout.fillWidth: true
-        spacing: Theme.spacingMd
+        columns: root.width >= 560 ? 2 : 1
+        columnSpacing: Theme.spacingMd
+        rowSpacing: Theme.spacingMd
 
         Rectangle {
             id: cloudOptionCard
@@ -32,11 +34,13 @@ StyledCard {
             Behavior on color {
                 ColorAnimation {
                     duration: Theme.animFast
+                    easing.type: Easing.OutCubic
                 }
             }
             Behavior on border.color {
                 ColorAnimation {
                     duration: Theme.animFast
+                    easing.type: Easing.OutCubic
                 }
             }
 
@@ -148,11 +152,13 @@ StyledCard {
             Behavior on color {
                 ColorAnimation {
                     duration: Theme.animFast
+                    easing.type: Easing.OutCubic
                 }
             }
             Behavior on border.color {
                 ColorAnimation {
                     duration: Theme.animFast
+                    easing.type: Easing.OutCubic
                 }
             }
 

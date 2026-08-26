@@ -113,9 +113,18 @@ ApplicationWindow {
 
     Component.onCompleted: rebuildNavModel()
 
+    property bool isQuitting: false
+
+    function quitApplication() {
+        root.isQuitting = true;
+        Qt.quit();
+    }
+
     onClosing: close => {
-        close.accepted = false;
-        root.hide();
+        if (!root.isQuitting) {
+            close.accepted = false;
+            root.hide();
+        }
     }
 
     Platform.SystemTrayIcon {
@@ -137,7 +146,7 @@ ApplicationWindow {
             }
             Platform.MenuItem {
                 text: qsTr("Quit")
-                onTriggered: Qt.quit()
+                onTriggered: root.quitApplication()
             }
         }
 
@@ -159,7 +168,7 @@ ApplicationWindow {
             root.requestActivate();
         }
         function onRequestQuitApp() {
-            Qt.quit();
+            root.quitApplication();
         }
         function onActiveBackendChanged() {
             root.rebuildNavModel();
@@ -184,9 +193,16 @@ ApplicationWindow {
         spacing: 0
 
         Rectangle {
-            Layout.preferredWidth: Theme.sidebarWidth
+            Layout.preferredWidth: root.width < 840 ? 180 : Theme.sidebarWidth
             Layout.fillHeight: true
             color: Theme.sidebarBg
+
+            Behavior on Layout.preferredWidth {
+                NumberAnimation {
+                    duration: Theme.animFast
+                    easing.type: Easing.OutCubic
+                }
+            }
 
             StyledDivider {
                 anchors.right: parent.right
@@ -383,28 +399,13 @@ ApplicationWindow {
                 }
             }
 
-            SequentialAnimation {
+            OpacityAnimator {
                 id: viewTransitionAnim
-
-                ParallelAnimation {
-                    NumberAnimation {
-                        target: viewStack
-                        property: "opacity"
-                        from: 0.4
-                        to: 1.0
-                        duration: Theme.animNormal
-                        easing.type: Easing.OutCubic
-                    }
-
-                    NumberAnimation {
-                        target: viewStack
-                        property: "y"
-                        from: 4
-                        to: 0
-                        duration: Theme.animNormal
-                        easing.type: Easing.OutCubic
-                    }
-                }
+                target: viewStack
+                from: 0.4
+                to: 1.0
+                duration: Theme.animNormal
+                easing.type: Easing.OutCubic
             }
         }
     }

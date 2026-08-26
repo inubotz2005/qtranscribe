@@ -60,6 +60,34 @@ QString ColorUtils::systemThemeName() const {
     return m_systemThemeIsDark ? u"Dark"_s : u"Light"_s;
 }
 
+QColor ColorUtils::accentColor() const {
+    const auto palette = QGuiApplication::palette();
+
+    auto isValidAccent = [](const QColor& c) -> bool {
+        if (!c.isValid() || c.alphaF() < 0.5f)
+            return false;
+        const float sum = static_cast<float>(c.redF() + c.greenF() + c.blueF());
+        if (sum < 0.2f || (c.redF() > 0.95f && c.greenF() > 0.95f && c.blueF() > 0.95f))
+            return false;
+        if (c.lightnessF() < 0.15f || c.lightnessF() > 0.92f)
+            return false;
+        if (c.hslSaturationF() < 0.15f && std::abs(c.redF() - c.greenF()) < 0.05f &&
+            std::abs(c.greenF() - c.blueF()) < 0.05f)
+            return false;
+        return true;
+    };
+
+    QColor accent = palette.color(QPalette::Accent);
+    if (isValidAccent(accent))
+        return accent;
+
+    QColor highlight = palette.color(QPalette::Highlight);
+    if (isValidAccent(highlight))
+        return highlight;
+
+    return m_isDark ? QColor(u"#3584E4"_s) : QColor(u"#1C71D8"_s);
+}
+
 void ColorUtils::updateEffectiveTheme() {
     const auto* hints = QGuiApplication::styleHints();
     const auto scheme = hints ? hints->colorScheme() : Qt::ColorScheme::Unknown;

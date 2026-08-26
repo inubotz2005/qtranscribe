@@ -35,15 +35,31 @@ Rectangle {
         return Theme.accentColor;
     }
 
+    readonly property bool isCompact: root.width > 0 && root.width < 500
+
     implicitHeight: bannerLayout.implicitHeight + (Theme.spacingMd * 2)
     color: Theme.statusBgColor(resolvedAccentColor, 0.12)
     border.color: customBorderColor.a > 0.001 ? customBorderColor : Theme.statusBorderColor(resolvedAccentColor, 0.4)
     border.width: 1
     radius: 0
 
+    Behavior on color {
+        ColorAnimation {
+            duration: Theme.animFast
+            easing.type: Easing.OutCubic
+        }
+    }
+
+    Behavior on border.color {
+        ColorAnimation {
+            duration: Theme.animFast
+            easing.type: Easing.OutCubic
+        }
+    }
+
     Layout.fillWidth: true
 
-    RowLayout {
+    GridLayout {
         id: bannerLayout
         anchors {
             top: parent.top
@@ -51,7 +67,9 @@ Rectangle {
             right: parent.right
             margins: Theme.spacingMd
         }
-        spacing: Theme.spacingSm
+        columns: root.isCompact ? 1 : 2
+        columnSpacing: Theme.spacingSm
+        rowSpacing: Theme.spacingSm
 
         ColumnLayout {
             Layout.fillWidth: true
@@ -84,6 +102,7 @@ Rectangle {
         RowLayout {
             spacing: Theme.spacingSm
             visible: root.actionText.length > 0 || root.secondaryActionText.length > 0
+            Layout.alignment: root.isCompact ? Qt.AlignLeft : Qt.AlignVCenter
 
             StyledButton {
                 id: bannerPrimaryBtn

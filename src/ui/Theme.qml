@@ -1,4 +1,6 @@
 pragma Singleton
+pragma ComponentBehavior: Bound
+pragma ValueTypeBehavior: Addressable
 import QtQuick
 import QTranscribe
 
@@ -13,15 +15,6 @@ QtObject {
     onThemeModeChanged: {
         if (themeMode !== ColorUtils.themeMode) {
             ColorUtils.themeMode = themeMode;
-        }
-    }
-
-    readonly property Connections _themeModeConn: Connections {
-        target: ColorUtils
-        function onThemeModeChanged() {
-            if (root.themeMode !== ColorUtils.themeMode) {
-                root.themeMode = ColorUtils.themeMode;
-            }
         }
     }
 

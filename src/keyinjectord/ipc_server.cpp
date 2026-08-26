@@ -2,12 +2,12 @@
 
 #include "logging.h"
 
-#include "protocol.h"
-
+#include <array>
 #include <cerrno>
 #include <cstdint>
 #include <cstdio>
 #include <cstring>
+#include <span>
 #include <stdexcept>
 
 #include <sys/eventfd.h>
@@ -76,10 +76,9 @@ void IpcServer::run() {
     KEYINJECTORD_LOG_DEBUG("Event loop started");
 
     while (true) {
-        m_pollFds.clear();
-        m_pollFds.push_back({m_signalFd, POLLIN, 0});
-        m_pollFds.push_back({m_stopEventFd, POLLIN, 0});
-        m_pollFds.push_back({m_socketFd, POLLIN | POLLHUP | POLLERR, 0});
+        m_pollFds = {pollfd {.fd = m_signalFd, .events = POLLIN, .revents = 0},
+                     pollfd {.fd = m_stopEventFd, .events = POLLIN, .revents = 0},
+                     pollfd {.fd = m_socketFd, .events = POLLIN | POLLHUP | POLLERR, .revents = 0}};
 
         int ret = poll(m_pollFds.data(), m_pollFds.size(), -1);
         if (ret < 0) {
@@ -89,7 +88,6 @@ void IpcServer::run() {
             break;
         }
 
-        // Check signalfd for shutdown signals
         if (m_pollFds[0].revents & POLLIN) {
             struct signalfd_siginfo sigInfo {};
             [[maybe_unused]] auto n = read(m_signalFd, &sigInfo, sizeof(sigInfo));
@@ -98,7 +96,6 @@ void IpcServer::run() {
             break;
         }
 
-        // Check stop eventfd
         if (m_pollFds[1].revents & POLLIN) {
             uint64_t val = 0;
             [[maybe_unused]] auto n = read(m_stopEventFd, &val, sizeof(val));
@@ -106,7 +103,6 @@ void IpcServer::run() {
             break;
         }
 
-        // Check client socket activity or disconnection
         if (m_pollFds[2].revents & (POLLIN | POLLHUP | POLLERR)) {
             if (!handleClientRead()) {
                 break;
@@ -122,9 +118,9 @@ void IpcServer::run() {
 }
 
 bool IpcServer::handleClientRead() {
-    uint8_t buf[kMaxBufferSize];
+    std::array<uint8_t, kMaxBufferSize> buf {};
 
-    ssize_t n = read(m_socketFd, buf, sizeof(buf));
+    ssize_t n = read(m_socketFd, buf.data(), buf.size());
     if (n <= 0) {
         if (n == 0) {
             KEYINJECTORD_LOG_INFO("Peer disconnected (EOF), shutting down daemon");
@@ -134,8 +130,7 @@ bool IpcServer::handleClientRead() {
         return false;
     }
 
-    for (ssize_t i = 0; i < n; ++i) {
-        uint8_t opcodeRaw = buf[i];
+    for (uint8_t opcodeRaw : std::span(buf.data(), static_cast<size_t>(n))) {
         ResponseStatus status;
         bool shouldDisconnect = false;
 

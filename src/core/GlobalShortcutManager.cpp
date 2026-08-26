@@ -15,6 +15,10 @@
 #include <QTextStream>
 #include <QTimer>
 
+#include <algorithm>
+#include <array>
+#include <ranges>
+
 using namespace Qt::StringLiterals;
 using namespace std::chrono_literals;
 
@@ -110,7 +114,6 @@ void GlobalShortcutManager::ensureIconExists() {
         }
     }
 
-    // Also write legacy icon name for fallback compatibility
     const QString legacyIconPath = dir.filePath(u"qtranscribe.png"_s);
     if (!QFile::exists(legacyIconPath)) {
         QFile::copy(u":/qt/qml/QTranscribe/assets/speech-to-text-128.png"_s, legacyIconPath);
@@ -160,7 +163,6 @@ void GlobalShortcutManager::ensureDesktopFileExists() {
         }
     }
 
-    // Clean up obsolete legacy desktop file if present in user's local applications directory
     const QString legacyDesktopFilePath = dir.filePath(kLegacyDesktopFileName);
     if (QFile::exists(legacyDesktopFilePath)) {
         QFile::remove(legacyDesktopFilePath);
@@ -241,9 +243,10 @@ void GlobalShortcutManager::createSession() {
     if (reply.type() == QDBusMessage::ErrorMessage) {
         qWarning() << "GlobalShortcutManager: CreateSession failed:" << reply.errorMessage();
         const QString errMsg = reply.errorMessage();
-        if (errMsg.contains(u"ServiceUnknown"_s) || errMsg.contains(u"UnknownMethod"_s) ||
-            errMsg.contains(u"UnknownInterface"_s) || errMsg.contains(u"No such interface"_s) ||
-            errMsg.contains(u"not provided by any .service files"_s)) {
+        static constexpr auto kUnsupportedErrors =
+            std::to_array<QStringView>({u"ServiceUnknown", u"UnknownMethod", u"UnknownInterface", u"No such interface",
+                                        u"not provided by any .service files"});
+        if (std::ranges::any_of(kUnsupportedErrors, [&](QStringView err) { return errMsg.contains(err); })) {
             setSupported(false);
             setStatusMessage(u"Global shortcuts not supported on your desktop environment"_s);
         } else {
@@ -316,12 +319,9 @@ void GlobalShortcutManager::bindShortcuts() {
         QDBusMessage::createMethodCall(u"org.freedesktop.portal.Desktop"_s, u"/org/freedesktop/portal/desktop"_s,
                                        u"org.freedesktop.portal.GlobalShortcuts"_s, u"BindShortcuts"_s);
 
-    ShortcutList shortcuts;
-    PortalShortcut sc;
-    sc.id = u"toggle-recording"_s;
-    sc.options.insert(u"description"_s, u"Toggle speech-to-text recording"_s);
-    sc.options.insert(u"preferred_trigger"_s, u"CTRL+SHIFT+space"_s);
-    shortcuts.append(sc);
+    ShortcutList shortcuts = {PortalShortcut {.id = u"toggle-recording"_s,
+                                              .options = {{u"description"_s, u"Toggle speech-to-text recording"_s},
+                                                          {u"preferred_trigger"_s, u"CTRL+SHIFT+space"_s}}}};
 
     QVariantMap options;
     options.insert(u"handle_token"_s, bindReqToken);

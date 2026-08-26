@@ -3,8 +3,8 @@
 #include "device_interface.h"
 #include "protocol.h"
 
+#include <array>
 #include <cstddef>
-#include <vector>
 
 #include <poll.h>
 
@@ -30,7 +30,7 @@ private:
     IDevice& m_device;
     int m_signalFd = -1;
     int m_stopEventFd = -1;
-    std::vector<struct pollfd> m_pollFds;
+    std::array<struct pollfd, 3> m_pollFds {};
 };
 
 } // namespace keyinjectord

@@ -18,9 +18,9 @@ public:
 
     static bool sendRemoteCommand(const QString& method);
 
-    static const QString kDbusServiceName;
-    static const QString kDbusObjectPath;
-    static const QString kDbusInterfaceName;
+    inline static constexpr QStringView kDbusServiceName = u"io.github.qtranscribe.SpeechService";
+    inline static constexpr QStringView kDbusObjectPath = u"/io/github/qtranscribe/SpeechService";
+    inline static constexpr QStringView kDbusInterfaceName = u"io.github.qtranscribe.SpeechService";
 
 private:
     bool m_registered = false;

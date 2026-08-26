@@ -61,7 +61,8 @@ void TranscriptionPipeline::registerBackend(Backend backend, AbstractSttClient* 
         return;
     }
 
-    if (auto* old = m_sttClients.value(backend)) {
+    if (m_sttClients.contains(backend)) {
+        auto* old = m_sttClients[backend];
         disconnect(old, &AbstractSttClient::transcriptionReady, this, &TranscriptionPipeline::onSttTranscriptionReady);
         disconnect(old, &AbstractSttClient::errorOccurred, this, &TranscriptionPipeline::onSttError);
         disconnect(old, &AbstractSttClient::readyChanged, this, &TranscriptionPipeline::updatePipelineHealth);
@@ -187,7 +188,6 @@ void TranscriptionPipeline::startRecording() {
         setLastError(tr("No microphone found. Please connect a microphone."));
         setStatusMessage(tr("No microphone found"));
         setState(State::Error);
-        updatePipelineHealth();
         return;
     }
 
@@ -195,7 +195,6 @@ void TranscriptionPipeline::startRecording() {
     setState(State::Recording);
     setStatusMessage(tr("Listening…"));
     m_recorder->startRecording();
-    updatePipelineHealth();
 }
 
 void TranscriptionPipeline::stopRecording() {
@@ -221,40 +220,45 @@ void TranscriptionPipeline::toggleRecording() {
 }
 
 void TranscriptionPipeline::cancel() {
-    if (m_recorder) {
+    if (m_state == State::Idle) {
+        return;
+    }
+
+    qCDebug(lcSpeech) << "TranscriptionPipeline: Cancelling operation in state:" << static_cast<int>(m_state);
+
+    if (m_state == State::Recording && m_recorder) {
         m_recorder->cancelRecording();
     }
+
     if (auto* stt = activeSttClient()) {
         stt->cancel();
     }
+
     if (m_llmClient) {
         m_llmClient->cancel();
     }
 
+    m_lastWavData.clear();
     setState(State::Idle);
     setStatusMessage(tr("Ready"));
-    updatePipelineHealth();
 }
 
 void TranscriptionPipeline::retry() {
-    if (isBusy()) {
-        return;
-    }
-
-    auto* stt = activeSttClient();
-    if (!stt) {
+    if (m_state != State::Error || m_lastWavData.isEmpty()) {
+        qCDebug(lcSpeech) << "TranscriptionPipeline: Cannot retry — not in Error state or no audio cached";
         return;
     }
 
     setLastError({});
     setState(State::Transcribing);
     setStatusMessage(tr("Retrying transcription…"));
-    updatePipelineHealth();
 
-    if (!m_lastWavData.isEmpty()) {
+    auto* stt = activeSttClient();
+    if (stt) {
         stt->transcribe(m_lastWavData);
     } else {
-        stt->retryLast();
+        setLastError(tr("Speech-to-text service is unavailable"));
+        setState(State::Error);
     }
 }
 
@@ -263,7 +267,6 @@ void TranscriptionPipeline::clearError() {
         setLastError({});
         setState(State::Idle);
         setStatusMessage(tr("Ready"));
-        updatePipelineHealth();
     }
 }
 
@@ -284,14 +287,12 @@ void TranscriptionPipeline::onRecordingFinished(const QByteArray& wavData) {
         qCDebug(lcSpeech) << "TranscriptionPipeline: Empty audio payload, resetting to Idle";
         setState(State::Idle);
         setStatusMessage(tr("Ready"));
-        updatePipelineHealth();
         return;
     }
 
     m_lastWavData = wavData;
     setState(State::Transcribing);
     setStatusMessage(tr("Transcribing audio…"));
-    updatePipelineHealth();
 
     auto* stt = activeSttClient();
     if (stt) {
@@ -299,7 +300,6 @@ void TranscriptionPipeline::onRecordingFinished(const QByteArray& wavData) {
     } else {
         setLastError(tr("Speech-to-text service is unavailable"));
         setState(State::Error);
-        updatePipelineHealth();
     }
 }
 

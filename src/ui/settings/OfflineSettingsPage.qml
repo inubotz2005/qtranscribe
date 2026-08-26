@@ -41,7 +41,7 @@ Item {
             Layout.fillWidth: true
         }
 
-        PreferenceCard {
+        StyledCard {
             title: qsTr("Active Whisper Model")
             description: qsTr("Current model selected for offline transcription inference")
 
@@ -113,7 +113,7 @@ Item {
                 }
             }
 
-            PreferenceDivider {}
+            StyledDivider {}
 
             RowLayout {
                 Layout.fillWidth: true
@@ -158,11 +158,10 @@ Item {
             }
         }
 
-        PreferenceCard {
+        StyledCard {
             title: qsTr("Whisper Model Library")
             description: qsTr("Download and manage speech recognition models from HuggingFace (ggerganov/whisper.cpp)")
 
-            // Storage and disk space header
             Rectangle {
                 Layout.fillWidth: true
                 implicitHeight: storageHeaderRow.implicitHeight + Theme.spacingSm * 2
@@ -180,7 +179,7 @@ Item {
                     spacing: Theme.spacingSm
 
                     StyledIcon {
-                        source: "qrc:/icons/info.svg"
+                        source: "qrc:/qt/qml/QTranscribe/assets/icons/info.svg"
                         size: 14
                         color: Theme.textSecondary
                         Layout.alignment: Qt.AlignVCenter
@@ -234,7 +233,6 @@ Item {
                 }
             }
 
-            // Error Banner if present
             Rectangle {
                 Layout.fillWidth: true
                 implicitHeight: errorLayout.implicitHeight + Theme.spacingSm * 2
@@ -271,9 +269,8 @@ Item {
                 }
             }
 
-            PreferenceDivider {}
+            StyledDivider {}
 
-            // Model List
             ColumnLayout {
                 Layout.fillWidth: true
                 spacing: Theme.spacingSm
@@ -315,7 +312,6 @@ Item {
                             anchors.margins: Theme.spacingSm
                             spacing: Theme.spacingXs
 
-                            // Main Top Row: Name, filename/size/memory info, Status Badge, and Action Buttons
                             RowLayout {
                                 Layout.fillWidth: true
                                 spacing: Theme.spacingSm
@@ -372,7 +368,6 @@ Item {
                                         }
                                     }
 
-                                    // Compact Description
                                     StyledText {
                                         text: modelRow.description
                                         variant: "caption"
@@ -384,7 +379,6 @@ Item {
                                     }
                                 }
 
-                                // Status Badges
                                 StateBadge {
                                     text: qsTr("Active")
                                     statusType: "accent"
@@ -405,12 +399,10 @@ Item {
                                     pulsing: true
                                 }
 
-                                // Quick Actions Row
                                 RowLayout {
                                     spacing: Theme.spacingXs
                                     Layout.alignment: Qt.AlignVCenter
 
-                                    // Cancel button during active download
                                     StyledButton {
                                         text: qsTr("Cancel")
                                         size: "small"
@@ -421,7 +413,6 @@ Item {
                                         }
                                     }
 
-                                    // Download button
                                     StyledButton {
                                         text: qsTr("Download")
                                         size: "small"
@@ -433,7 +424,6 @@ Item {
                                         }
                                     }
 
-                                    // Set Active button
                                     StyledButton {
                                         text: qsTr("Set Active")
                                         size: "small"
@@ -444,7 +434,6 @@ Item {
                                         }
                                     }
 
-                                    // Delete button
                                     StyledButton {
                                         text: qsTr("Delete")
                                         size: "small"
@@ -457,7 +446,6 @@ Item {
                                 }
                             }
 
-                            // Inline progress bar and metrics when actively downloading
                             ColumnLayout {
                                 Layout.fillWidth: true
                                 spacing: 2
@@ -518,7 +506,7 @@ Item {
             }
         }
 
-        PreferenceCard {
+        StyledCard {
             title: qsTr("Hardware Acceleration")
             description: qsTr("GPU compute offloading status and inference backend diagnostics")
 

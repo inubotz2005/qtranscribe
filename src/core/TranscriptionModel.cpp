@@ -52,11 +52,9 @@ void TranscriptionSourceModel::addRecord(const QString& text) {
     }
 
     beginInsertRows(QModelIndex(), 0, 0);
-    TranscriptionRecord rec;
-    rec.id = QUuid::createUuid().toString(QUuid::WithoutBraces);
-    rec.timestamp = QDateTime::currentDateTimeUtc();
-    rec.text = text;
-    m_records.prepend(rec);
+    m_records.prepend(TranscriptionRecord {.id = QUuid::createUuid().toString(QUuid::WithoutBraces),
+                                           .timestamp = QDateTime::currentDateTimeUtc(),
+                                           .text = text});
     endInsertRows();
 
     if (m_records.size() > kMaxHistoryRecords) {

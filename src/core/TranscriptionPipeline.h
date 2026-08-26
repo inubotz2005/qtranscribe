@@ -15,7 +15,6 @@ class QTimer;
 class TranscriptionPipeline : public QObject {
     Q_OBJECT
     QML_ELEMENT
-    QML_SINGLETON
 
 public:
     enum class State { Idle, Recording, Transcribing, Enhancing, Error };

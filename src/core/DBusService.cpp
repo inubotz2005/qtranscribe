@@ -9,10 +9,6 @@
 
 using namespace Qt::StringLiterals;
 
-const QString DBusService::kDbusServiceName = u"io.github.qtranscribe.SpeechService"_s;
-const QString DBusService::kDbusObjectPath = u"/io/github/qtranscribe/SpeechService"_s;
-const QString DBusService::kDbusInterfaceName = u"io.github.qtranscribe.SpeechService"_s;
-
 DBusService::DBusService(QObject* parent)
     : QObject(parent) { }
 
@@ -21,7 +17,8 @@ bool DBusService::sendRemoteCommand(const QString& method) {
         return false;
     }
 
-    QDBusInterface remoteService(kDbusServiceName, kDbusObjectPath, kDbusInterfaceName, QDBusConnection::sessionBus());
+    QDBusInterface remoteService(kDbusServiceName.toString(), kDbusObjectPath.toString(), kDbusInterfaceName.toString(),
+                                 QDBusConnection::sessionBus());
     if (remoteService.isValid()) {
         QDBusMessage reply = remoteService.call(method);
         if (reply.type() == QDBusMessage::ErrorMessage) {
@@ -39,7 +36,7 @@ bool DBusService::registerService() {
         return false;
     }
 
-    if (!QDBusConnection::sessionBus().registerService(kDbusServiceName)) {
+    if (!QDBusConnection::sessionBus().registerService(kDbusServiceName.toString())) {
         qWarning() << "DBusService: Failed to register service" << kDbusServiceName;
         return false;
     }
@@ -57,7 +54,7 @@ bool DBusService::registerController(SpeechController* controller) {
     }
 
     bool ok = QDBusConnection::sessionBus().registerObject(
-        kDbusObjectPath, kDbusInterfaceName, controller,
+        kDbusObjectPath.toString(), kDbusInterfaceName.toString(), controller,
         QDBusConnection::ExportAllSlots | QDBusConnection::ExportAllSignals | QDBusConnection::ExportAllInvokables);
 
     if (ok) {

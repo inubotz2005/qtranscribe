@@ -1,22 +1,19 @@
 #include "SpeechController.h"
 
-#include "AudioRecorder.h"
 #include "GroqApiClient.h"
-#include "GroqLlmClient.h"
-#include "GroqSttClient.h"
 #include "LoggingCategories.h"
 #include "TextInjectorClient.h"
 #include "TranscriptionModel.h"
 
 #include "GlobalShortcutManager.h"
 #include "TranscriptionPipeline.h"
-#include "WhisperSttClient.h"
 
+#include <QClipboard>
 #include <QDebug>
 #include <QGuiApplication>
-#include <QRegularExpression>
 #include <QSettings>
 #include <QSoundEffect>
+#include <QStringTokenizer>
 #include <QUrl>
 
 using namespace Qt::StringLiterals;
@@ -34,10 +31,6 @@ SpeechController::SpeechController(QObject* parent)
     QSettings settings;
     m_soundEnabled = settings.value(u"Audio/SoundEnabled"_s, true).toBool();
 
-    // Instantiate a default transcription pipeline if not injected externally
-    setPipeline(new TranscriptionPipeline(this));
-    m_ownsPipeline = true;
-
     qCDebug(lcSpeech) << "SpeechController presentation coordinator constructed.";
 }
 
@@ -48,10 +41,6 @@ void SpeechController::setPipeline(TranscriptionPipeline* pipeline) {
 
     if (m_pipeline) {
         disconnect(m_pipeline, nullptr, this, nullptr);
-        if (m_ownsPipeline) {
-            delete m_pipeline;
-            m_ownsPipeline = false;
-        }
     }
 
     m_pipeline = pipeline;
@@ -63,6 +52,7 @@ void SpeechController::setPipeline(TranscriptionPipeline* pipeline) {
         connect(m_pipeline, &TranscriptionPipeline::activeBackendChanged, this,
                 &SpeechController::activeBackendChanged);
         connect(m_pipeline, &TranscriptionPipeline::canRecordChanged, this, &SpeechController::canRecordChanged);
+        connect(m_pipeline, &TranscriptionPipeline::audioLevelChanged, this, &SpeechController::audioLevelChanged);
         connect(m_pipeline, &TranscriptionPipeline::statusMessageChanged, this,
                 &SpeechController::statusMessageChanged);
         connect(m_pipeline, &TranscriptionPipeline::lastErrorChanged, this, &SpeechController::lastErrorChanged);
@@ -79,20 +69,6 @@ void SpeechController::setPipeline(TranscriptionPipeline* pipeline) {
 
 TranscriptionPipeline* SpeechController::pipeline() const {
     return m_pipeline;
-}
-
-void SpeechController::registerSttClient(TranscriptionBackend backend, AbstractSttClient* client) {
-    if (m_pipeline) {
-        m_pipeline->registerBackend(static_cast<TranscriptionPipeline::Backend>(backend), client);
-    }
-}
-
-void SpeechController::setSttClient(GroqSttClient* sttClient) {
-    registerSttClient(TranscriptionBackend::Groq, sttClient);
-}
-
-void SpeechController::setWhisperSttClient(WhisperSttClient* whisperClient) {
-    registerSttClient(TranscriptionBackend::WhisperCpp, whisperClient);
 }
 
 void SpeechController::setApiClient(GroqApiClient* api) {
@@ -132,18 +108,6 @@ void SpeechController::setShortcutManager(GlobalShortcutManager* mgr) {
                 &SpeechController::updatePresenterState);
     }
     updatePresenterState();
-}
-
-void SpeechController::setAudioRecorder(AudioRecorder* recorder) {
-    if (m_pipeline) {
-        m_pipeline->setAudioRecorder(recorder);
-    }
-}
-
-void SpeechController::setLlmClient(GroqLlmClient* llmClient) {
-    if (m_pipeline) {
-        m_pipeline->setLlmClient(llmClient);
-    }
 }
 
 void SpeechController::setTextInjector(TextInjectorClient* injector) {
@@ -214,6 +178,10 @@ bool SpeechController::isBusy() const {
 
 bool SpeechController::canRecord() const {
     return m_pipeline && m_pipeline->canRecord();
+}
+
+qreal SpeechController::audioLevel() const {
+    return m_pipeline ? m_pipeline->audioLevel() : 0.0;
 }
 
 QString SpeechController::statusMessage() const {
@@ -329,17 +297,25 @@ void SpeechController::clearDictationPad() {
 }
 
 void SpeechController::copyDictationPad() {
-    if (!m_dictationPadText.isEmpty() && m_historyModel) {
-        m_historyModel->copyToClipboard(m_dictationPadText);
+    if (!m_dictationPadText.isEmpty()) {
+        copyToClipboard(m_dictationPadText);
+    }
+}
+
+void SpeechController::copyToClipboard(const QString& text) {
+    if (QClipboard* clipboard = QGuiApplication::clipboard()) {
+        clipboard->setText(text);
     }
 }
 
 int SpeechController::calculateWordCount(const QString& text) {
-    const QString trimmed = text.trimmed();
-    if (trimmed.isEmpty()) {
-        return 0;
+    int words = 0;
+    for (auto token : QStringTokenizer {QStringView(text), u' ', Qt::SkipEmptyParts}) {
+        if (!token.trimmed().isEmpty()) {
+            ++words;
+        }
     }
-    return trimmed.split(QRegularExpression(u"\\s+"_s), Qt::SkipEmptyParts).size();
+    return words;
 }
 
 void SpeechController::showWindow() {
@@ -452,7 +428,6 @@ void SpeechController::onPipelineStateChanged(TranscriptionPipeline::State /*sta
     emit recordingChanged();
     emit transcribingChanged();
     emit enhancingChanged();
-    emit canRecordChanged();
     updatePresenterState();
 }
 

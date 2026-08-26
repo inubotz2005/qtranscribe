@@ -20,7 +20,6 @@ GroqApiClient::GroqApiClient(QObject* parent)
     , m_nam(new QNetworkAccessManager(this)) {
     QNetworkProxyFactory::setUseSystemConfiguration(true);
 
-    // Enforce modern TLS security (TLS 1.2+ minimum, ALPN HTTP/2 negotiation, strict peer verification)
     QSslConfiguration sslConfig = QSslConfiguration::defaultConfiguration();
     sslConfig.setProtocol(QSsl::TlsV1_2OrLater);
     sslConfig.setPeerVerifyMode(QSslSocket::VerifyPeer);

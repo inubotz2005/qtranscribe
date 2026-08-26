@@ -11,7 +11,7 @@ Dialog {
     title: qsTr("Clipboard Overwrite Notice")
     modal: true
     width: 480
-    anchors.centerIn: parent
+    anchors.centerIn: Overlay.overlay
     closePolicy: Popup.CloseOnEscape | Popup.CloseOnPressOutside
 
     background: Rectangle {

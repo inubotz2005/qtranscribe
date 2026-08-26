@@ -60,7 +60,6 @@ bool DaemonConnector::ensureDaemonRunning() {
         return true;
     }
 
-    // Clean up any stale state before launching
     if (m_socket->state() != QLocalSocket::UnconnectedState) {
         m_socket->close();
     }

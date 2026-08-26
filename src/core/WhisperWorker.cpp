@@ -41,9 +41,6 @@ bool WhisperWorker::extractPcmSamples(const QByteArray& wavData, std::vector<flo
         return false;
     }
 
-    // 1. Try decoding with miniaudio configured to 1-channel mono at WHISPER_SAMPLE_RATE (16 kHz).
-    // miniaudio automatically handles format conversion (Float32, Int32, Int16, UInt8),
-    // channel downmixing (stereo/multichannel -> mono), and anti-aliased resampling.
     ma_decoder_config decoderConfig = ma_decoder_config_init(ma_format_f32, 1, WHISPER_SAMPLE_RATE);
     ma_decoder decoder;
 
@@ -63,7 +60,6 @@ bool WhisperWorker::extractPcmSamples(const QByteArray& wavData, std::vector<flo
         ma_decoder_uninit(&decoder);
     }
 
-    // 2. Fallback manual WAV parser for custom/raw PCM streams
     const char* data = wavData.constData();
     if (std::memcmp(data, "RIFF", 4) != 0 || std::memcmp(data + 8, "WAVE", 4) != 0) {
         return false;
@@ -128,19 +124,19 @@ bool WhisperWorker::extractPcmSamples(const QByteArray& wavData, std::vector<flo
         float sum = 0.0f;
         for (int ch = 0; ch < numChannels; ++ch) {
             const int sampleIdx = (f * numChannels + ch) * bytesPerSample;
-            if (audioFormat == 3 && bitsPerSample == 32) { // IEEE Float32
+            if (audioFormat == 3 && bitsPerSample == 32) {
                 float val = 0.0f;
                 std::memcpy(&val, samplePtr + sampleIdx, sizeof(float));
                 sum += val;
-            } else if (bitsPerSample == 32) { // 32-bit PCM
+            } else if (bitsPerSample == 32) {
                 int32_t val = 0;
                 std::memcpy(&val, samplePtr + sampleIdx, sizeof(int32_t));
                 sum += static_cast<float>(val) / 2147483648.0f;
-            } else if (bitsPerSample == 16) { // 16-bit PCM
+            } else if (bitsPerSample == 16) {
                 int16_t val = 0;
                 std::memcpy(&val, samplePtr + sampleIdx, sizeof(int16_t));
                 sum += static_cast<float>(val) / 32768.0f;
-            } else if (bitsPerSample == 8) { // 8-bit PCM
+            } else if (bitsPerSample == 8) {
                 const uint8_t val = static_cast<uint8_t>(samplePtr[sampleIdx]);
                 sum += (static_cast<float>(val) - 128.0f) / 128.0f;
             }
@@ -148,7 +144,6 @@ bool WhisperWorker::extractPcmSamples(const QByteArray& wavData, std::vector<flo
         monoPcm[f] = std::clamp(sum / static_cast<float>(numChannels), -1.0f, 1.0f);
     }
 
-    // Resampling fallback if sample rate is not 16000 Hz
     if (sampleRate != WHISPER_SAMPLE_RATE && sampleRate > 0) {
         const double ratio = static_cast<double>(sampleRate) / static_cast<double>(WHISPER_SAMPLE_RATE);
         const int outSampleCount = static_cast<int>(static_cast<double>(frameCount) / ratio);
@@ -158,7 +153,7 @@ bool WhisperWorker::extractPcmSamples(const QByteArray& wavData, std::vector<flo
             const int idx0 = static_cast<int>(srcIdx);
             const int idx1 = std::min(idx0 + 1, frameCount - 1);
             const float frac = static_cast<float>(srcIdx - idx0);
-            outPcmf32[i] = monoPcm[idx0] * (1.0f - frac) + monoPcm[idx1] * frac;
+            outPcmf32[i] = std::lerp(monoPcm[idx0], monoPcm[idx1], frac);
         }
     } else {
         outPcmf32 = std::move(monoPcm);

@@ -88,7 +88,6 @@ int main(int argc, char* argv[]) {
 
     KEYINJECTORD_LOG_DEBUG("Starting with delay=%dms, socket-fd=%d", delayMs, socketFd);
 
-    // Open /dev/uinput with CAP_DAC_OVERRIDE raised temporarily
     int uinputFd;
     {
         KEYINJECTORD_LOG_DEBUG("Opening /dev/uinput with capability...");
@@ -100,12 +99,10 @@ int main(int argc, char* argv[]) {
             KEYINJECTORD_LOG_ERROR("Did you run: sudo setcap \"cap_dac_override+p\" %s ?", argv[0]);
             return 1;
         }
-        // CapabilityGuard destructor automatically lowers CAP_DAC_OVERRIDE from Effective set
     }
 
     KEYINJECTORD_LOG_DEBUG("/dev/uinput opened successfully (fd=%d)", uinputFd);
 
-    // Permanently drop privileges
     try {
         keyinjectord::permanentlyDropCapDacOverride();
     } catch (const std::exception& e) {

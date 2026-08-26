@@ -50,8 +50,6 @@ qt_add_qml_module(qtranscribe_ui
         controls/StyledSlider.qml
         controls/StyledText.qml
         controls/StyledTextField.qml
-        settings/PreferenceDivider.qml
-        settings/PreferenceCard.qml
         settings/PreferenceRow.qml
         settings/PreferenceSwitch.qml
         settings/EngineModeSwitcherCard.qml

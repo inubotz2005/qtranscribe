@@ -2,13 +2,16 @@
 
 #include "logging.h"
 
+#include <algorithm>
+#include <array>
 #include <cerrno>
 #include <climits>
 #include <cstring>
 #include <filesystem>
+#include <ranges>
 #include <string>
+#include <string_view>
 
-#include <sys/capability.h>
 #include <sys/socket.h>
 #include <sys/stat.h>
 #include <sys/un.h>
@@ -83,9 +86,14 @@ bool validateExecutableTopology(const std::filesystem::path& parentExePath, cons
     std::string parentNorm = parentExePath.lexically_normal().string();
 
     // Reject well-known untrusted/temporary/shared locations
-    if (parentNorm == "/tmp" || parentNorm.starts_with("/tmp/") || parentNorm == "/var/tmp" ||
-        parentNorm.starts_with("/var/tmp/") || parentNorm == "/dev/shm" || parentNorm.starts_with("/dev/shm/") ||
-        parentNorm == "/run/user" || parentNorm.starts_with("/run/user/")) {
+    static constexpr auto kUntrustedPrefixes =
+        std::to_array<std::string_view>({"/tmp", "/var/tmp", "/dev/shm", "/run/user"});
+    const std::string_view norm = parentNorm;
+    const bool isUntrusted = std::ranges::any_of(kUntrustedPrefixes, [&](std::string_view prefix) {
+        return norm == prefix ||
+               (norm.starts_with(prefix) && norm.size() > prefix.size() && norm[prefix.size()] == '/');
+    });
+    if (isUntrusted) {
         KEYINJECTORD_LOG_ERROR("Launcher authorization failed: parent binary in untrusted directory '%s'",
                                parentNorm.c_str());
         return setResult(AuthResult::UntrustedLocation);
@@ -203,8 +211,6 @@ bool validateExecutableTopology(const std::filesystem::path& parentExePath, cons
     }
 #endif
 
-    // Colocation validation:
-    // Both executables must be directly colocated in the exact same directory, or be the exact same file (self-test).
     if (parentExePath != selfExePath && parentDir != selfDir) {
         KEYINJECTORD_LOG_ERROR(
             "Launcher authorization failed: parent path '%s' is not colocated in helper directory '%s'",
@@ -212,10 +218,8 @@ bool validateExecutableTopology(const std::filesystem::path& parentExePath, cons
         return setResult(AuthResult::UntrustedLocation);
     }
 
-    // Verify ownership:
 #ifdef KEYINJECTORD_DEV_AUTH
     if (selfStat.st_uid != 0) {
-        // User-owned helper in development / test mode: parent binary and directory must belong to current user or root
         if ((parentStat.st_uid != getuid() && parentStat.st_uid != 0) ||
             (parentDirStat.st_uid != getuid() && parentDirStat.st_uid != 0)) {
             KEYINJECTORD_LOG_ERROR(
@@ -228,8 +232,6 @@ bool validateExecutableTopology(const std::filesystem::path& parentExePath, cons
     }
 #endif
 
-    // In production / release mode (or when self is root-owned):
-    // Helper, parent binary, and containing directories must be strictly owned by root (UID 0).
     if (selfStat.st_uid != 0 || parentStat.st_uid != 0 || parentDirStat.st_uid != 0 || selfDirStat.st_uid != 0) {
         KEYINJECTORD_LOG_ERROR("Launcher authorization failed: production helper/parent/dir must be root-owned (self "
                                "UID: %d, parent UID: %d, parent dir UID: %d, self dir UID: %d)",

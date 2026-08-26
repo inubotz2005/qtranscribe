@@ -62,7 +62,6 @@ signals:
     void computeDeviceChanged();
     void lastErrorChanged();
 
-    // Internal signals routed to worker
     void requestLoadModel(uint64_t loadRequestId, const QString& path, bool useGpu);
     void requestUnloadModel();
     void requestTranscribe(uint64_t requestId, const QByteArray& wavData, const QString& language,

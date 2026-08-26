@@ -8,6 +8,10 @@
 #include <QStandardPaths>
 #include <QTimer>
 
+#include <algorithm>
+#include <array>
+#include <ranges>
+
 using namespace Qt::StringLiterals;
 using namespace std::chrono_literals;
 
@@ -62,18 +66,16 @@ void ClipboardManager::scheduleRestore(const QString& backupText, bool hadConten
 }
 
 QString ClipboardManager::bundledWlToolPath(const QString& toolName) const {
-    QString appDir = QCoreApplication::applicationDirPath();
-    QStringList searchLocations = {appDir + u"/"_s + toolName, appDir + u"/../libexec/"_s + toolName,
-                                   appDir + u"/libexec/"_s + toolName, u"/usr/lib/qtranscribe/"_s + toolName,
-                                   u"/usr/libexec/qtranscribe/"_s + toolName};
+    const QString appDir = QCoreApplication::applicationDirPath();
+    const auto searchLocations = std::to_array<QString>(
+        {appDir + u"/"_s + toolName, appDir + u"/../libexec/"_s + toolName, appDir + u"/libexec/"_s + toolName,
+         u"/usr/lib/qtranscribe/"_s + toolName, u"/usr/libexec/qtranscribe/"_s + toolName});
 
-    for (const QString& candidate : searchLocations) {
-        QFileInfo fi(candidate);
-        if (fi.exists() && fi.isExecutable()) {
-            return candidate;
-        }
-    }
-    return toolName;
+    const auto it = std::ranges::find_if(searchLocations, [](const QString& candidate) {
+        const QFileInfo fi(candidate);
+        return fi.exists() && fi.isExecutable();
+    });
+    return it != searchLocations.end() ? *it : toolName;
 }
 
 QString ClipboardManager::backupText() const {

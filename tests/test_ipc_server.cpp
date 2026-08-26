@@ -61,7 +61,6 @@ private slots:
         QLocalSocket client;
         QVERIFY(client.setSocketDescriptor(sv[1], QLocalSocket::ConnectedState, QIODevice::ReadWrite));
 
-        // Send binary Paste opcode (0x01)
         const char cmdByte = static_cast<char>(keyinjectord::Opcode::Paste);
         client.write(&cmdByte, 1);
         client.flush();
@@ -87,7 +86,6 @@ private slots:
         QLocalSocket client;
         QVERIFY(client.setSocketDescriptor(sv[1], QLocalSocket::ConnectedState, QIODevice::ReadWrite));
 
-        // Send binary Ping opcode (0x02)
         const char cmdByte = static_cast<char>(keyinjectord::Opcode::Ping);
         client.write(&cmdByte, 1);
         client.flush();
@@ -97,7 +95,6 @@ private slots:
         QCOMPARE(response.size(), 1);
         QCOMPARE(static_cast<uint8_t>(response[0]), static_cast<uint8_t>(keyinjectord::ResponseStatus::Ok));
 
-        // No paste action performed on Ping
         QCOMPARE(mockDevice.ctrlVCalledCount.load(), 0);
 
         client.close();
@@ -118,7 +115,6 @@ private slots:
         QLocalSocket client;
         QVERIFY(client.setSocketDescriptor(sv[1], QLocalSocket::ConnectedState, QIODevice::ReadWrite));
 
-        // Send binary Paste opcode (0x01)
         const char cmdByte = static_cast<char>(keyinjectord::Opcode::Paste);
         client.write(&cmdByte, 1);
         client.flush();
@@ -142,7 +138,6 @@ private slots:
         QLocalSocket client;
         QVERIFY(client.setSocketDescriptor(sv[1], QLocalSocket::ConnectedState, QIODevice::ReadWrite));
 
-        // Send unknown opcode (0xFF)
         const char invalidCmd = static_cast<char>(0xFF);
         client.write(&invalidCmd, 1);
         client.flush();
@@ -152,7 +147,6 @@ private slots:
         QCOMPARE(response.size(), 1);
         QCOMPARE(static_cast<uint8_t>(response[0]), static_cast<uint8_t>(keyinjectord::ResponseStatus::UnknownCmd));
 
-        // Server should immediately close socket on unknown opcode
         QVERIFY(client.waitForDisconnected(2000) || client.state() == QLocalSocket::UnconnectedState);
         QCOMPARE(mockDevice.ctrlVCalledCount.load(), 0);
     }
@@ -166,10 +160,8 @@ private slots:
 
         std::thread serverThread([&server]() { server.run(); });
 
-        // Close peer socket immediately
         ::close(sv[1]);
 
-        // Server should detect EOF and exit run loop cleanly without hanging
         serverThread.join();
         QVERIFY(true);
     }
@@ -201,22 +193,25 @@ private slots:
 
     void testAuthorizeLauncherNonSocketFd() {
         keyinjectord::AuthResult res = keyinjectord::AuthResult::Success;
-        // stdout (1) is not a socket
         bool ok = keyinjectord::authorizeLauncher(1, &res);
         QCOMPARE(res, keyinjectord::AuthResult::NotASocket);
         QVERIFY(!ok);
     }
 
-    void testValidateExecutableTopologyRejectsUntrustedPrefixes() {
-        char selfExeBuf[PATH_MAX];
-        ssize_t len = readlink("/proc/self/exe", selfExeBuf, sizeof(selfExeBuf) - 1);
-        QVERIFY(len > 0);
+    std::filesystem::path currentExePath() const {
+        std::array<char, PATH_MAX> selfExeBuf{};
+        ssize_t len = readlink("/proc/self/exe", selfExeBuf.data(), selfExeBuf.size() - 1);
+        if (len <= 0) return {};
         selfExeBuf[len] = '\0';
-        std::filesystem::path selfPath(selfExeBuf);
+        return std::filesystem::path(selfExeBuf.data());
+    }
+
+    void testValidateExecutableTopologyRejectsUntrustedPrefixes() {
+        const std::filesystem::path selfPath = currentExePath();
+        QVERIFY(!selfPath.empty());
 
         keyinjectord::AuthResult res = keyinjectord::AuthResult::Success;
 
-        // Untrusted temporary/volatile prefixes must fail with UntrustedLocation
         QVERIFY(!keyinjectord::validateExecutableTopology("/tmp/qtranscribe", selfPath, &res));
         QCOMPARE(res, keyinjectord::AuthResult::UntrustedLocation);
 
@@ -231,28 +226,22 @@ private slots:
     }
 
     void testValidateExecutableTopologyRejectsDeletedExecutable() {
-        char selfExeBuf[PATH_MAX];
-        ssize_t len = readlink("/proc/self/exe", selfExeBuf, sizeof(selfExeBuf) - 1);
-        QVERIFY(len > 0);
-        selfExeBuf[len] = '\0';
-        std::filesystem::path selfPath(selfExeBuf);
+        const std::filesystem::path selfPath = currentExePath();
+        QVERIFY(!selfPath.empty());
 
         keyinjectord::AuthResult res = keyinjectord::AuthResult::Success;
         std::filesystem::path deletedParent = "/usr/bin/qtranscribe (deleted)";
         QVERIFY(!keyinjectord::validateExecutableTopology(deletedParent, selfPath, &res));
         QCOMPARE(res, keyinjectord::AuthResult::DeletedExecutable);
 
-        std::filesystem::path deletedSelf = std::string(selfExeBuf) + " (deleted)";
+        std::filesystem::path deletedSelf = selfPath.string() + " (deleted)";
         QVERIFY(!keyinjectord::validateExecutableTopology(selfPath, deletedSelf, &res));
         QCOMPARE(res, keyinjectord::AuthResult::DeletedExecutable);
     }
 
     void testValidateExecutableTopologyRejectsUnauthorizedName() {
-        char selfExeBuf[PATH_MAX];
-        ssize_t len = readlink("/proc/self/exe", selfExeBuf, sizeof(selfExeBuf) - 1);
-        QVERIFY(len > 0);
-        selfExeBuf[len] = '\0';
-        std::filesystem::path selfPath(selfExeBuf);
+        const std::filesystem::path selfPath = currentExePath();
+        QVERIFY(!selfPath.empty());
 
         keyinjectord::AuthResult res = keyinjectord::AuthResult::Success;
         std::filesystem::path badName = selfPath.parent_path() / "unauthorized_binary";
@@ -261,11 +250,8 @@ private slots:
     }
 
     void testValidateExecutableTopologyAcceptsSelfInvocation() {
-        char selfExeBuf[PATH_MAX];
-        ssize_t len = readlink("/proc/self/exe", selfExeBuf, sizeof(selfExeBuf) - 1);
-        QVERIFY(len > 0);
-        selfExeBuf[len] = '\0';
-        std::filesystem::path selfPath(selfExeBuf);
+        const std::filesystem::path selfPath = currentExePath();
+        QVERIFY(!selfPath.empty());
 
         keyinjectord::AuthResult res = keyinjectord::AuthResult::InvalidFd;
         QVERIFY(keyinjectord::validateExecutableTopology(selfPath, selfPath, &res));
@@ -273,13 +259,9 @@ private slots:
     }
 
     void testValidateExecutableTopologyRejectsNonColocated() {
-        char selfExeBuf[PATH_MAX];
-        ssize_t len = readlink("/proc/self/exe", selfExeBuf, sizeof(selfExeBuf) - 1);
-        QVERIFY(len > 0);
-        selfExeBuf[len] = '\0';
-        std::filesystem::path selfPath(selfExeBuf);
+        const std::filesystem::path selfPath = currentExePath();
+        QVERIFY(!selfPath.empty());
 
-        // Create a real file in a non-colocated subfolder to test the colocation check
         std::filesystem::path nestedDir = selfPath.parent_path() / "test_nested_dir";
         std::filesystem::create_directories(nestedDir);
         std::filesystem::path nestedBinary = nestedDir / "qtranscribe";
@@ -290,7 +272,6 @@ private slots:
 
         keyinjectord::AuthResult res = keyinjectord::AuthResult::Success;
 
-        // Non-colocated directory must be rejected with UntrustedLocation
         bool ok = keyinjectord::validateExecutableTopology(nestedBinary, selfPath, &res);
         QVERIFY(!ok);
         QCOMPARE(res, keyinjectord::AuthResult::UntrustedLocation);
@@ -300,11 +281,8 @@ private slots:
     }
 
     void testValidateExecutableTopologyRejectsWorldWritable() {
-        char selfExeBuf[PATH_MAX];
-        ssize_t len = readlink("/proc/self/exe", selfExeBuf, sizeof(selfExeBuf) - 1);
-        QVERIFY(len > 0);
-        selfExeBuf[len] = '\0';
-        std::filesystem::path selfPath(selfExeBuf);
+        const std::filesystem::path selfPath = currentExePath();
+        QVERIFY(!selfPath.empty());
 
         std::filesystem::path testDir = selfPath.parent_path() / "test_isolated_world_writable_dir";
         std::filesystem::create_directories(testDir);

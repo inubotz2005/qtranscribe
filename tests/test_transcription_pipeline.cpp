@@ -177,7 +177,6 @@ private slots:
         pipeline.setActiveBackend(TranscriptionPipeline::Backend::Groq);
         pipeline.initialize();
 
-        // 1. Cancel during recording
         pipeline.setState(TranscriptionPipeline::State::Recording);
 
         pipeline.cancel();
@@ -186,7 +185,6 @@ private slots:
         QVERIFY(groqClient.m_lastReceivedWav.isEmpty());
         QCOMPARE(groqClient.m_cancelled, true);
 
-        // 2. Cancel during transcribing
         groqClient.m_cancelled = false;
         pipeline.setState(TranscriptionPipeline::State::Recording);
         const QByteArray dummyWav("RIFFdummyWAVdata");
@@ -210,7 +208,6 @@ private slots:
         const QByteArray dummyWav("RIFFdummyWAVdata");
         QMetaObject::invokeMethod(&pipeline, "onRecordingFinished", Q_ARG(QByteArray, dummyWav));
 
-        // State remains Idle and transcribe is NOT called
         QCOMPARE(pipeline.state(), TranscriptionPipeline::State::Idle);
         QCOMPARE(groqClient.m_transcribeCallCount, 0);
     }
@@ -225,7 +222,6 @@ private slots:
         QCOMPARE(pipeline.canRecord(), false);
 
         groqClient.setReady(true);
-        // Note: canRecord also requires an active audio input device from recorder
         QCOMPARE(groqClient.isReady(), true);
     }
 
@@ -251,11 +247,9 @@ private slots:
 
         groqClient.simulateSuccess(u"Raw transcribed speech"_s);
 
-        // When Groq is active and LLM is enabled, pipeline transitions to Enhancing
         QCOMPARE(pipeline.state(), TranscriptionPipeline::State::Enhancing);
         QCOMPARE(pipeline.isBusy(), true);
 
-        // Emit LLM enhancement completion
         emit llmClient.enhancementReady(u"Polished speech text."_s);
 
         QCOMPARE(pipeline.state(), TranscriptionPipeline::State::Idle);
@@ -281,7 +275,6 @@ private slots:
 
         whisperClient.simulateSuccess(u"Raw local offline text"_s);
 
-        // For WhisperCpp, LLM enhancement must be bypassed immediately
         QCOMPARE(pipeline.state(), TranscriptionPipeline::State::Idle);
         QCOMPARE(pipeline.isBusy(), false);
         QCOMPARE(pipeline.lastTranscription(), u"Raw local offline text"_s);

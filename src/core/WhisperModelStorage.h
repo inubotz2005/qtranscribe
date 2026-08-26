@@ -14,35 +14,23 @@ class QFile;
 class QNetworkReply;
 
 struct WhisperModelItem {
-    QString id;
-    QString name;
-    QString fileName;
-    QString downloadUrl;
+    QString id = {};
+    QString name = {};
+    QString fileName = {};
+    QString downloadUrl = {};
     qint64 sizeBytes = 0;
-    QString sizeFormatted;
-    QString memoryFormatted;
-    QString description;
+    QString sizeFormatted = {};
+    QString memoryFormatted = {};
+    QString description = {};
     bool isInstalled = false;
     qint64 installedSizeBytes = 0;
-    QString installedSizeFormatted;
+    QString installedSizeFormatted = {};
 
     bool isDownloading = false;
     qreal progress = 0.0;
     qint64 bytesReceived = 0;
     qint64 totalBytes = 0;
-    QString speedFormatted;
-
-    WhisperModelItem() = default;
-    WhisperModelItem(QString id_, QString name_, QString fileName_, QString downloadUrl_, qint64 sizeBytes_,
-                     QString sizeFormatted_, QString memoryFormatted_, QString description_)
-        : id(std::move(id_))
-        , name(std::move(name_))
-        , fileName(std::move(fileName_))
-        , downloadUrl(std::move(downloadUrl_))
-        , sizeBytes(sizeBytes_)
-        , sizeFormatted(std::move(sizeFormatted_))
-        , memoryFormatted(std::move(memoryFormatted_))
-        , description(std::move(description_)) { }
+    QString speedFormatted = {};
 };
 
 class WhisperModelStorage : public QObject {

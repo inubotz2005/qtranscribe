@@ -2,6 +2,8 @@
 #include <QNetworkReply>
 #include <QTest>
 
+#include <array>
+
 #include "HttpRequestRunner.h"
 
 class TestHttpRequestRunner : public QObject {
@@ -30,15 +32,24 @@ private slots:
         QCOMPARE(policy.shouldRetry(res, 0, false), true);
         QCOMPARE(policy.calculateRetryDelayMs(res), 2000);
 
-        // Long rate limit (exceeding maxTransientRetryAfterSec)
         res.retryAfterSeconds = 10;
+        QCOMPARE(policy.isTransientError(res), false);
+        QCOMPARE(policy.shouldRetry(res, 0, false), false);
+    }
+
+    void testRequestPolicyUnauthorized() {
+        RequestPolicy policy;
+        GroqApiResponse res;
+        res.isSuccess = false;
+        res.httpStatus = 401;
+
         QCOMPARE(policy.isTransientError(res), false);
         QCOMPARE(policy.shouldRetry(res, 0, false), false);
     }
 
     void testRequestPolicyServerErrors() {
         RequestPolicy policy;
-        const int serverErrors[] = {500, 502, 503, 504, 599};
+        const auto serverErrors = std::to_array({500, 502, 503, 504, 599});
 
         for (int code : serverErrors) {
             GroqApiResponse res;
@@ -54,12 +65,12 @@ private slots:
     void testRequestPolicyNetworkErrors() {
         RequestPolicy policy;
 
-        const QNetworkReply::NetworkError transientErrors[] = {
+        const auto transientErrors = std::to_array({
             QNetworkReply::RemoteHostClosedError,
             QNetworkReply::TemporaryNetworkFailureError,
             QNetworkReply::TimeoutError,
             QNetworkReply::NetworkSessionFailedError
-        };
+        });
 
         for (auto err : transientErrors) {
             GroqApiResponse res;
@@ -70,12 +81,12 @@ private slots:
             QCOMPARE(policy.shouldRetry(res, 0, false), true);
         }
 
-        const QNetworkReply::NetworkError nonTransientErrors[] = {
+        const auto nonTransientErrors = std::to_array({
             QNetworkReply::HostNotFoundError,
             QNetworkReply::ConnectionRefusedError,
             QNetworkReply::OperationCanceledError,
             QNetworkReply::AuthenticationRequiredError
-        };
+        });
 
         for (auto err : nonTransientErrors) {
             GroqApiResponse res;
@@ -89,7 +100,7 @@ private slots:
 
     void testRequestPolicyClientErrors() {
         RequestPolicy policy;
-        const int clientErrors[] = {400, 401, 403, 404, 422};
+        const auto clientErrors = std::to_array({400, 401, 403, 404, 422});
 
         for (int code : clientErrors) {
             GroqApiResponse res;
@@ -107,13 +118,8 @@ private slots:
         res.isSuccess = false;
         res.httpStatus = 503;
 
-        // Valid retry on attempt 0
         QCOMPARE(policy.shouldRetry(res, 0, false), true);
-
-        // Disallowed when max retries (1) reached
         QCOMPARE(policy.shouldRetry(res, 1, false), false);
-
-        // Disallowed when cancelled
         QCOMPARE(policy.shouldRetry(res, 0, true), false);
     }
 

@@ -8,6 +8,8 @@
 #include <QTimer>
 
 #include <algorithm>
+#include <array>
+#include <ranges>
 
 using namespace Qt::StringLiterals;
 using namespace std::chrono_literals;
@@ -101,22 +103,14 @@ void TextInjectorClient::setInjectionDelay(int delayMs) {
 }
 
 bool TextInjectorClient::isKde() const {
-    const QString xdgCurrentDesktop = qEnvironmentVariable("XDG_CURRENT_DESKTOP");
-    const QString xdgSessionDesktop = qEnvironmentVariable("XDG_SESSION_DESKTOP");
-    const QString kdeSession = qEnvironmentVariable("KDE_FULL_SESSION");
-
-    if (!kdeSession.isEmpty()) {
+    if (!qEnvironmentVariableIsEmpty("KDE_FULL_SESSION")) {
         return true;
     }
-
-    if (xdgCurrentDesktop.contains(u"kde"_s, Qt::CaseInsensitive) ||
-        xdgCurrentDesktop.contains(u"plasma"_s, Qt::CaseInsensitive) ||
-        xdgSessionDesktop.contains(u"kde"_s, Qt::CaseInsensitive) ||
-        xdgSessionDesktop.contains(u"plasma"_s, Qt::CaseInsensitive)) {
-        return true;
-    }
-
-    return false;
+    const auto desktops = std::to_array<QStringView>(
+        {qEnvironmentVariable("XDG_CURRENT_DESKTOP"), qEnvironmentVariable("XDG_SESSION_DESKTOP")});
+    return std::ranges::any_of(desktops, [](QStringView dt) {
+        return dt.contains(u"kde", Qt::CaseInsensitive) || dt.contains(u"plasma", Qt::CaseInsensitive);
+    });
 }
 
 bool TextInjectorClient::clipboardWarningAcknowledged() const {

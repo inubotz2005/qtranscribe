@@ -363,8 +363,8 @@ Item {
                                     anchors.bottom: parent.bottom
                                     anchors.horizontalCenter: parent.horizontalCenter
                                     width: 4
-                                    height: Math.max(4, 28 * Math.min(AudioRecorder.audioLevel * waveformBar.multiplier,
-                                                                      1.0))
+                                    height: Math.max(4, 28 * Math.min(SpeechController.audioLevel
+                                                                      * waveformBar.multiplier, 1.0))
 
                                     radius: Theme.radiusXs / 2
                                     color: Theme.colorSuccess

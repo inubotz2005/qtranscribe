@@ -6,6 +6,8 @@
 #include <QSettings>
 #include <QStyleHints>
 
+#include <cmath>
+
 using namespace Qt::StringLiterals;
 
 ColorUtils::ColorUtils(QObject* parent)
@@ -59,36 +61,18 @@ QString ColorUtils::systemThemeName() const {
 }
 
 void ColorUtils::updateEffectiveTheme() {
-    bool sysDark = true;
-    if (auto* hints = QGuiApplication::styleHints()) {
-        const auto scheme = hints->colorScheme();
-        if (scheme == Qt::ColorScheme::Dark) {
-            sysDark = true;
-        } else if (scheme == Qt::ColorScheme::Light) {
-            sysDark = false;
-        } else {
-            const QColor winCol = QGuiApplication::palette().color(QPalette::Window);
-            sysDark = (winCol.lightnessF() < 0.5);
-        }
-    } else {
-        const QColor winCol = QGuiApplication::palette().color(QPalette::Window);
-        sysDark = (winCol.lightnessF() < 0.5);
-    }
+    const auto* hints = QGuiApplication::styleHints();
+    const auto scheme = hints ? hints->colorScheme() : Qt::ColorScheme::Unknown;
+    const bool sysDark =
+        (scheme == Qt::ColorScheme::Dark) ||
+        (scheme != Qt::ColorScheme::Light && QGuiApplication::palette().color(QPalette::Window).lightnessF() < 0.5);
 
-    const bool sysDarkChanged = (m_systemThemeIsDark != sysDark);
-    m_systemThemeIsDark = sysDark;
-    if (sysDarkChanged) {
+    if (m_systemThemeIsDark != sysDark) {
+        m_systemThemeIsDark = sysDark;
         emit systemThemeChanged();
     }
 
-    bool effectiveDark = true;
-    if (m_themeMode == u"dark"_s) {
-        effectiveDark = true;
-    } else if (m_themeMode == u"light"_s) {
-        effectiveDark = false;
-    } else {
-        effectiveDark = sysDark;
-    }
+    const bool effectiveDark = (m_themeMode == u"dark"_s) ? true : (m_themeMode == u"light"_s) ? false : sysDark;
 
     if (m_isDark != effectiveDark) {
         m_isDark = effectiveDark;
@@ -104,9 +88,10 @@ QColor ColorUtils::withAlpha(const QColor& baseColor, qreal alpha) {
 
 QColor ColorUtils::tint(const QColor& baseColor, const QColor& tintColor) {
     const float a = static_cast<float>(tintColor.alphaF());
-    return QColor::fromRgbF(baseColor.redF() * (1.0f - a) + tintColor.redF() * a,
-                            baseColor.greenF() * (1.0f - a) + tintColor.greenF() * a,
-                            baseColor.blueF() * (1.0f - a) + tintColor.blueF() * a, baseColor.alphaF());
+    return QColor::fromRgbF(
+        std::lerp(static_cast<float>(baseColor.redF()), static_cast<float>(tintColor.redF()), a),
+        std::lerp(static_cast<float>(baseColor.greenF()), static_cast<float>(tintColor.greenF()), a),
+        std::lerp(static_cast<float>(baseColor.blueF()), static_cast<float>(tintColor.blueF()), a), baseColor.alphaF());
 }
 
 QColor ColorUtils::statusBg(const QColor& baseColor, qreal alpha) {

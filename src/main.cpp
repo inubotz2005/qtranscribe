@@ -22,6 +22,8 @@
 #include <QTimer>
 #include <QtQml/QQmlExtensionPlugin>
 
+#include <array>
+
 Q_IMPORT_QML_PLUGIN(QTranscribePlugin)
 
 using namespace Qt::StringLiterals;
@@ -67,28 +69,23 @@ int main(int argc, char* argv[]) {
 
     parser.process(app);
 
-    if (parser.isSet(toggleOption)) {
-        if (DBusService::sendRemoteCommand(u"toggleRecording"_s))
-            return 0;
-    } else if (parser.isSet(startOption)) {
-        if (DBusService::sendRemoteCommand(u"startRecording"_s))
-            return 0;
-    } else if (parser.isSet(stopOption)) {
-        if (DBusService::sendRemoteCommand(u"stopRecording"_s))
-            return 0;
-    } else if (parser.isSet(quitOption)) {
-        if (DBusService::sendRemoteCommand(u"quitApp"_s))
-            return 0;
-    } else if (parser.isSet(showOption)) {
-        if (DBusService::sendRemoteCommand(u"showWindow"_s))
-            return 0;
-    } else {
-        if (DBusService::sendRemoteCommand(u"showWindow"_s))
-            return 0;
+    const auto command = [&]() -> QString {
+        if (parser.isSet(toggleOption))
+            return u"toggleRecording"_s;
+        if (parser.isSet(startOption))
+            return u"startRecording"_s;
+        if (parser.isSet(stopOption))
+            return u"stopRecording"_s;
+        if (parser.isSet(quitOption))
+            return u"quitApp"_s;
+        return u"showWindow"_s;
+    }();
+    if (DBusService::sendRemoteCommand(command)) {
+        return 0;
     }
 
     QIcon appIcon;
-    static constexpr int kIconSizes[] = {16, 24, 32, 64, 128, 256, 512};
+    constexpr auto kIconSizes = std::to_array({16, 24, 32, 64, 128, 256, 512});
     for (int sz : kIconSizes) {
         appIcon.addFile(QString(u":/qt/qml/QTranscribe/assets/speech-to-text-%1.png"_s).arg(sz), QSize(sz, sz));
     }
@@ -112,7 +109,7 @@ int main(int argc, char* argv[]) {
     auto* shortcut = engine.singletonInstance<GlobalShortcutManager*>("QTranscribe", "GlobalShortcutManager");
     auto* injector = engine.singletonInstance<TextInjectorClient*>("QTranscribe", "TextInjectorClient");
     auto* history = engine.singletonInstance<TranscriptionModel*>("QTranscribe", "TranscriptionModel");
-    auto* pipeline = engine.singletonInstance<TranscriptionPipeline*>("QTranscribe", "TranscriptionPipeline");
+    auto* pipeline = new TranscriptionPipeline(&app);
     auto* controller = engine.singletonInstance<SpeechController*>("QTranscribe", "SpeechController");
 
     if (stt && api)

@@ -7,12 +7,7 @@
 #include <QString>
 
 class GlobalShortcutManager;
-class AudioRecorder;
 class GroqApiClient;
-class GroqSttClient;
-class WhisperSttClient;
-class AbstractSttClient;
-class GroqLlmClient;
 class TextInjectorClient;
 class TranscriptionModel;
 class QSoundEffect;
@@ -33,6 +28,7 @@ public:
     Q_PROPERTY(DictationState dictationState READ dictationState NOTIFY dictationStateChanged FINAL)
     Q_PROPERTY(bool isBusy READ isBusy NOTIFY dictationStateChanged FINAL)
     Q_PROPERTY(bool canRecord READ canRecord NOTIFY canRecordChanged FINAL)
+    Q_PROPERTY(qreal audioLevel READ audioLevel NOTIFY audioLevelChanged FINAL)
     Q_PROPERTY(QString statusMessage READ statusMessage NOTIFY statusMessageChanged FINAL)
     Q_PROPERTY(QString lastError READ lastError NOTIFY lastErrorChanged FINAL)
     Q_PROPERTY(bool recording READ recording NOTIFY recordingChanged FINAL)
@@ -60,13 +56,8 @@ public:
     void setPipeline(TranscriptionPipeline* pipeline);
     TranscriptionPipeline* pipeline() const;
 
-    void registerSttClient(TranscriptionBackend backend, AbstractSttClient* client);
-    void setSttClient(GroqSttClient* sttClient);
-    void setWhisperSttClient(WhisperSttClient* whisperClient);
     void setApiClient(GroqApiClient* api);
     void setShortcutManager(GlobalShortcutManager* mgr);
-    void setAudioRecorder(AudioRecorder* recorder);
-    void setLlmClient(GroqLlmClient* llmClient);
     void setTextInjector(TextInjectorClient* injector);
     void setHistoryModel(TranscriptionModel* model);
 
@@ -76,6 +67,7 @@ public:
     DictationState dictationState() const;
     bool isBusy() const;
     bool canRecord() const;
+    qreal audioLevel() const;
     QString statusMessage() const;
     QString lastError() const;
     bool recording() const;
@@ -103,6 +95,7 @@ public slots:
     void appendDictationPadText(const QString& text);
     void clearDictationPad();
     void copyDictationPad();
+    void copyToClipboard(const QString& text);
 
     void toggleRecording();
     void startRecording();
@@ -122,6 +115,7 @@ signals:
     void activeBackendChanged();
     void dictationStateChanged();
     void canRecordChanged();
+    void audioLevelChanged(qreal level);
     void statusMessageChanged();
     void lastErrorChanged();
     void recordingChanged();
@@ -148,8 +142,6 @@ private:
     static int calculateWordCount(const QString& text);
 
     TranscriptionPipeline* m_pipeline = nullptr;
-    bool m_ownsPipeline = false;
-
     GroqApiClient* m_apiClient = nullptr;
     GlobalShortcutManager* m_shortcutMgr = nullptr;
     TextInjectorClient* m_injector = nullptr;

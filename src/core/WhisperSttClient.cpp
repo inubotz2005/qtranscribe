@@ -43,7 +43,6 @@ WhisperSttClient::WhisperSttClient(QObject* parent)
     m_workerThread.setObjectName(u"WhisperInferenceThread"_s);
     m_workerThread.start();
 
-    // Ensure models directory exists for user convenience
     QDir().mkpath(modelsDirectory());
 }
 
@@ -176,12 +175,10 @@ void WhisperSttClient::checkModelStatus() {
 
     if (m_modelLoaded) {
         if (!m_loadedModelPath.isEmpty() && !QFile::exists(m_loadedModelPath)) {
-            // Previously loaded model was deleted from disk
             qCDebug(lcSpeech) << "WhisperSttClient: Loaded model file no longer exists, unloading:"
                               << m_loadedModelPath;
             unloadModel();
         } else if (m_loadedModelPath != targetPath) {
-            // Selected model changed while a model was loaded
             if (isModelInstalled()) {
                 qCDebug(lcSpeech) << "WhisperSttClient: Model selection changed, reloading to target:" << targetPath;
                 loadModel(targetPath);

@@ -255,13 +255,12 @@ Item {
             }
         }
 
-        // Sub-Tab 0: Credentials & Speech Model
         ColumnLayout {
             Layout.fillWidth: true
             spacing: Theme.spacingLg
             visible: root.activeSubTab === 0
 
-            PreferenceCard {
+            StyledCard {
                 title: qsTr("Groq API Key")
                 description: qsTr(
                                  "Required for cloud speech recognition and LLM text enhancement (Free tier available)")
@@ -310,7 +309,7 @@ Item {
                     }
                 }
 
-                PreferenceDivider {}
+                StyledDivider {}
 
                 RowLayout {
                     Layout.fillWidth: true
@@ -337,7 +336,7 @@ Item {
                 }
             }
 
-            PreferenceCard {
+            StyledCard {
                 title: qsTr("Speech Model & Language")
                 description: qsTr("Select the cloud Whisper model and spoken language for recognition")
 
@@ -363,7 +362,7 @@ Item {
                     }
                 }
 
-                PreferenceDivider {}
+                StyledDivider {}
 
                 PreferenceRow {
                     title: qsTr("Language")
@@ -388,7 +387,7 @@ Item {
                 }
             }
 
-            PreferenceCard {
+            StyledCard {
                 title: qsTr("Custom Vocabulary")
                 description: qsTr("Guide the cloud transcriber with specialized acronyms, names, or terminology")
 
@@ -491,13 +490,12 @@ Item {
             }
         }
 
-        // Sub-Tab 1: Text Enhancement
         ColumnLayout {
             Layout.fillWidth: true
             spacing: Theme.spacingLg
             visible: root.activeSubTab === 1
 
-            PreferenceCard {
+            StyledCard {
                 title: qsTr("Text Enhancement (LLM)")
                 description: qsTr(
                                  "Automatically polish, reformat, or correct transcribed text with cloud language models")
@@ -512,7 +510,7 @@ Item {
                     }
                 }
 
-                PreferenceDivider {}
+                StyledDivider {}
 
                 PreferenceRow {
                     title: qsTr("Enhancement Model")
@@ -538,7 +536,7 @@ Item {
                     }
                 }
 
-                PreferenceDivider {}
+                StyledDivider {}
 
                 PreferenceRow {
                     title: qsTr("Style Preset")
@@ -565,7 +563,7 @@ Item {
                 }
             }
 
-            PreferenceCard {
+            StyledCard {
                 title: qsTr("Style Precision / Creativity")
                 description: qsTr(
                                  "Lower values produce exact corrections; higher values produce more creative rewrites")
@@ -632,7 +630,7 @@ Item {
                 }
             }
 
-            PreferenceCard {
+            StyledCard {
                 title: GroqLlmClient.activePreset === "custom" ? qsTr("Custom Instructions") : qsTr(
                                                                      "Preset Instructions")
                 description: GroqLlmClient.activePreset === "custom" ? qsTr(

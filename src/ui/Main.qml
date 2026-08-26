@@ -63,7 +63,6 @@ ApplicationWindow {
         const isOnline = SpeechController.activeBackend === SpeechController.TranscriptionBackend.Groq;
         navModel.clear();
 
-        // MAIN
         navModel.append({
                             section: "MAIN",
                             title: qsTr("Dictate"),
@@ -85,7 +84,6 @@ ApplicationWindow {
                             });
         }
 
-        // PREFERENCES
         navModel.append({
                             section: "PREFERENCES",
                             title: qsTr("Dictation"),
@@ -99,7 +97,6 @@ ApplicationWindow {
                             sectionId: "system"
                         });
 
-        // INFO
         navModel.append({
                             section: "INFO",
                             title: qsTr("About"),

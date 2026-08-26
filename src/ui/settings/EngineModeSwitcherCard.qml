@@ -4,7 +4,7 @@ import QtQuick.Layouts
 import QTranscribe
 import "../controls"
 
-PreferenceCard {
+StyledCard {
     id: root
 
     title: qsTr("Transcription Engine")

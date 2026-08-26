@@ -1,7 +1,6 @@
 #pragma once
 
 #include <QAudioFormat>
-#include <QBuffer>
 #include <QByteArray>
 #include <QObject>
 #include <QQmlEngine>
@@ -64,6 +63,5 @@ private:
 
     static constexpr int kSampleRate = 16000;
     static constexpr int kChannelCount = 1;
-    static constexpr int kSampleSize = 16;
     static constexpr auto kMaxRecordingDuration = std::chrono::minutes(5);
 };

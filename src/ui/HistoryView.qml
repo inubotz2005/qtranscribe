@@ -237,7 +237,7 @@ Item {
                     return qsTr("0 transcriptions");
                     if (searchField.text.length > 0)
                     return qsTr("Showing %1 of %2 transcriptions").arg(TranscriptionModel.filteredCount).arg(
-                        TranscriptionModel.count);
+                        TranscriptionModel.totalCount);
                     return qsTr("%1 transcriptions").arg(TranscriptionModel.count);
                 }
                 variant: "caption"

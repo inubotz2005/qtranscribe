@@ -52,10 +52,8 @@ QString extractApiErrorMessage(const QByteArray& responseBody, const QString& de
 }
 
 GroqApiResponse parseReply(QNetworkReply* reply, qint64 latencyMs) {
-    GroqApiResponse response;
     if (!reply) {
-        response.errorMessage = u"Null network reply"_s;
-        return response;
+        return GroqApiResponse {.errorMessage = u"Null network reply"_s};
     }
 
     const int httpStatus = reply->attribute(QNetworkRequest::HttpStatusCodeAttribute).toInt();
@@ -63,29 +61,33 @@ GroqApiResponse parseReply(QNetworkReply* reply, qint64 latencyMs) {
     const QString errorString = reply->errorString();
     const QByteArray responseBody = reply->readAll();
 
-    response.httpStatus = httpStatus;
-    response.latencyMs = latencyMs;
-    response.rawBody = responseBody;
-    response.networkError = netErr;
-    response.isRateLimited = (httpStatus == 429);
     QByteArray retryAfterRaw = reply->headers().value(QHttpHeaders::WellKnownHeader::RetryAfter).toByteArray();
     if (retryAfterRaw.isEmpty()) {
         retryAfterRaw = reply->rawHeader("retry-after");
     }
-    response.retryAfterSeconds = parseRetryAfterSeconds(retryAfterRaw);
 
-    if (netErr == QNetworkReply::NoError && httpStatus >= 200 && httpStatus < 300) {
-        response.isSuccess = true;
+    const bool isSuccess = (netErr == QNetworkReply::NoError && httpStatus >= 200 && httpStatus < 300);
+    QJsonObject json;
+    QString errorMessage;
+
+    if (isSuccess) {
         const QJsonDocument doc = QJsonDocument::fromJson(responseBody);
         if (doc.isObject()) {
-            response.json = doc.object();
+            json = doc.object();
         }
     } else {
-        response.isSuccess = false;
-        response.errorMessage = extractApiErrorMessage(responseBody, u"Network error: %1"_s.arg(errorString));
+        errorMessage = extractApiErrorMessage(responseBody, u"Network error: %1"_s.arg(errorString));
     }
 
-    return response;
+    return GroqApiResponse {.httpStatus = httpStatus,
+                            .latencyMs = latencyMs,
+                            .rawBody = responseBody,
+                            .json = json,
+                            .errorMessage = errorMessage,
+                            .isSuccess = isSuccess,
+                            .isRateLimited = (httpStatus == 429),
+                            .retryAfterSeconds = parseRetryAfterSeconds(retryAfterRaw),
+                            .networkError = netErr};
 }
 
 } // namespace GroqResponseParser

@@ -5,8 +5,6 @@
 
 #include <chrono>
 
-using namespace std::chrono_literals;
-
 class QTimer;
 
 class ClipboardManager : public QObject {
@@ -20,7 +18,8 @@ public:
     bool setText(const QString& text, bool sensitive = true);
     void restore(const QString& backup, bool hadContent);
 
-    void scheduleRestore(const QString& backupText, bool hadContent, std::chrono::milliseconds delay = 800ms);
+    void scheduleRestore(const QString& backupText, bool hadContent,
+                         std::chrono::milliseconds delay = std::chrono::milliseconds(800));
     void cancelPendingRestore();
     bool hasActiveBackup() const;
 

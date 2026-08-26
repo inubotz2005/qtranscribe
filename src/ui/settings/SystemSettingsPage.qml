@@ -52,7 +52,7 @@ Item {
             }
         }
 
-        PreferenceCard {
+        StyledCard {
             title: qsTr("Appearance")
             description: qsTr("Choose your preferred theme or follow your desktop environment")
 
@@ -79,7 +79,7 @@ Item {
             }
         }
 
-        PreferenceCard {
+        StyledCard {
             title: qsTr("Sound Effects")
             description: qsTr("Play sounds when dictation starts and stops")
 
@@ -93,7 +93,7 @@ Item {
                 }
             }
 
-            PreferenceDivider {}
+            StyledDivider {}
 
             RowLayout {
                 Layout.fillWidth: true
@@ -127,7 +127,7 @@ Item {
             }
         }
 
-        PreferenceCard {
+        StyledCard {
             title: qsTr("Microphone Test")
             description: qsTr("Check microphone input level and audio capture")
 
@@ -223,7 +223,7 @@ Item {
             }
         }
 
-        PreferenceCard {
+        StyledCard {
             title: qsTr("Direct Typing")
             description: qsTr("Types text directly into the active application")
 
@@ -264,7 +264,7 @@ Item {
                     }
                 }
 
-                PreferenceDivider {}
+                StyledDivider {}
 
                 RowLayout {
                     Layout.fillWidth: true
@@ -309,7 +309,7 @@ Item {
                     }
                 }
 
-                PreferenceDivider {}
+                StyledDivider {}
 
                 ColumnLayout {
                     Layout.fillWidth: true
@@ -374,7 +374,7 @@ Item {
             }
         }
 
-        PreferenceCard {
+        StyledCard {
             title: qsTr("Clipboard Privacy & Behavior")
             description: qsTr("Control clipboard privacy and text injection behavior on Wayland")
 
@@ -389,7 +389,7 @@ Item {
                 }
             }
 
-            PreferenceDivider {
+            StyledDivider {
                 visible: !TextInjectorClient.isKde
             }
 
@@ -434,7 +434,7 @@ Item {
             }
         }
 
-        PreferenceCard {
+        StyledCard {
             title: qsTr("Global Shortcut")
             description: qsTr("System-wide keyboard shortcut to start and stop dictation")
 
@@ -470,7 +470,7 @@ Item {
                     }
                 }
 
-                PreferenceDivider {}
+                StyledDivider {}
 
                 StyledCard {
                     Layout.fillWidth: true
@@ -526,7 +526,7 @@ Item {
                                 iconSource: "qrc:/qt/qml/QTranscribe/assets/icons/copy.svg"
                                 size: "small"
                                 onClicked: {
-                                    TranscriptionModel.copyToClipboard("qtranscribe --toggle");
+                                    SpeechController.copyToClipboard("qtranscribe --toggle");
                                 }
                             }
                         }

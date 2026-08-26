@@ -11,6 +11,7 @@
 #include <algorithm>
 #include <cmath>
 #include <limits>
+#include <span>
 
 using namespace Qt::StringLiterals;
 
@@ -226,40 +227,35 @@ void AudioRecorder::onReadyRead() {
 
     const auto sampleFormat = m_format.sampleFormat();
     if (sampleFormat == QAudioFormat::Float) {
-        sampleCount = chunk.size() / sizeof(float);
-        if (sampleCount > 0) {
-            const auto* samples = reinterpret_cast<const float*>(chunk.constData());
-            for (qsizetype i = 0; i < sampleCount; ++i) {
-                const double val = static_cast<double>(samples[i]);
-                sumSquares += val * val;
-            }
+        const auto samples = std::span(reinterpret_cast<const float*>(chunk.constData()), chunk.size() / sizeof(float));
+        sampleCount = static_cast<qsizetype>(samples.size());
+        for (float s : samples) {
+            const double val = static_cast<double>(s);
+            sumSquares += val * val;
         }
     } else if (sampleFormat == QAudioFormat::Int32) {
-        sampleCount = chunk.size() / sizeof(qint32);
-        if (sampleCount > 0) {
-            const auto* samples = reinterpret_cast<const qint32*>(chunk.constData());
-            for (qsizetype i = 0; i < sampleCount; ++i) {
-                const double val = static_cast<double>(samples[i]) / 2147483647.0;
-                sumSquares += val * val;
-            }
+        const auto samples =
+            std::span(reinterpret_cast<const qint32*>(chunk.constData()), chunk.size() / sizeof(qint32));
+        sampleCount = static_cast<qsizetype>(samples.size());
+        for (qint32 s : samples) {
+            const double val = static_cast<double>(s) / 2147483647.0;
+            sumSquares += val * val;
         }
     } else if (sampleFormat == QAudioFormat::UInt8) {
-        sampleCount = chunk.size() / sizeof(quint8);
-        if (sampleCount > 0) {
-            const auto* samples = reinterpret_cast<const quint8*>(chunk.constData());
-            for (qsizetype i = 0; i < sampleCount; ++i) {
-                const double val = (static_cast<double>(samples[i]) - 128.0) / 128.0;
-                sumSquares += val * val;
-            }
+        const auto samples =
+            std::span(reinterpret_cast<const quint8*>(chunk.constData()), chunk.size() / sizeof(quint8));
+        sampleCount = static_cast<qsizetype>(samples.size());
+        for (quint8 s : samples) {
+            const double val = (static_cast<double>(s) - 128.0) / 128.0;
+            sumSquares += val * val;
         }
     } else {
-        sampleCount = chunk.size() / sizeof(qint16);
-        if (sampleCount > 0) {
-            const auto* samples = reinterpret_cast<const qint16*>(chunk.constData());
-            for (qsizetype i = 0; i < sampleCount; ++i) {
-                const double val = static_cast<double>(samples[i]) / 32767.0;
-                sumSquares += val * val;
-            }
+        const auto samples =
+            std::span(reinterpret_cast<const qint16*>(chunk.constData()), chunk.size() / sizeof(qint16));
+        sampleCount = static_cast<qsizetype>(samples.size());
+        for (qint16 s : samples) {
+            const double val = static_cast<double>(s) / 32767.0;
+            sumSquares += val * val;
         }
     }
 
@@ -281,9 +277,9 @@ QByteArray AudioRecorder::buildWavFile(const QByteArray& pcmData) const {
     const quint16 blockAlign = numChannels * (bitsPerSample / 8);
     const quint32 byteRate = sampleRate * blockAlign;
 
-    QByteArray header;
-    header.reserve(44);
-    QDataStream stream(&header, QIODevice::WriteOnly);
+    QByteArray wavFile;
+    wavFile.reserve(44 + pcmData.size());
+    QDataStream stream(&wavFile, QIODevice::WriteOnly);
     stream.setByteOrder(QDataStream::LittleEndian);
 
     stream.writeRawData("RIFF", 4);
@@ -302,9 +298,6 @@ QByteArray AudioRecorder::buildWavFile(const QByteArray& pcmData) const {
     stream.writeRawData("data", 4);
     stream << dataSize;
 
-    QByteArray wavFile;
-    wavFile.reserve(44 + pcmData.size());
-    wavFile.append(header);
     wavFile.append(pcmData);
     return wavFile;
 }

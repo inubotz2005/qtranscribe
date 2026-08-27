@@ -7,7 +7,7 @@ set -euo pipefail
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 REPO_ROOT="$(cd "${SCRIPT_DIR}/../.." && pwd)"
 
-DEFAULT_VERSION=$(cat "${REPO_ROOT}/VERSION" 2>/dev/null | tr -d '[:space:]' || echo "1.1.0")
+DEFAULT_VERSION=$(cat "${REPO_ROOT}/VERSION" 2>/dev/null | tr -d '[:space:]' || echo "1.2.0")
 FEDORA_VERSION="${1:-44}"
 APP_VERSION="${2:-$DEFAULT_VERSION}"
 APP_RELEASE="${3:-1}"

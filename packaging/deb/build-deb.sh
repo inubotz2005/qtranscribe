@@ -8,7 +8,7 @@ set -euo pipefail
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 REPO_ROOT="$(cd "${SCRIPT_DIR}/../.." && pwd)"
 
-DEFAULT_VERSION=$(cat "${REPO_ROOT}/VERSION" 2>/dev/null | tr -d '[:space:]' || echo "1.1.0")
+DEFAULT_VERSION=$(cat "${REPO_ROOT}/VERSION" 2>/dev/null | tr -d '[:space:]' || echo "1.2.0")
 UBUNTU_VERSION="${1:-24.04}"
 APP_VERSION="${2:-$DEFAULT_VERSION}"
 OUTPUT_DIR="${REPO_ROOT}/dist/deb"

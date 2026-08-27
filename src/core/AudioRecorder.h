@@ -28,6 +28,7 @@ public:
     QString statusMessage() const;
     qreal audioLevel() const;
 
+public slots:
     virtual void startRecording();
     virtual void stopRecording();
     virtual void cancelRecording();

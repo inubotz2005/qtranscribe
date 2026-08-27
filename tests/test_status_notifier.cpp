@@ -7,9 +7,8 @@
 #include <QTest>
 
 #include "AudioRecorder.h"
-#include "SpeechController.h"
+#include "DictationCoordinator.h"
 #include "StatusNotifierService.h"
-#include "TranscriptionPipeline.h"
 
 using namespace Qt::StringLiterals;
 
@@ -48,8 +47,7 @@ private Q_SLOTS:
     void testRecordingStateUpdates();
 
 private:
-    SpeechController* m_controller = nullptr;
-    TranscriptionPipeline* m_pipeline = nullptr;
+    DictationCoordinator* m_coordinator = nullptr;
     FakeAudioRecorder* m_recorder = nullptr;
     StatusNotifierService* m_service = nullptr;
 };
@@ -62,21 +60,19 @@ void TestStatusNotifier::initTestCase() {
     QCoreApplication::setOrganizationName(u"QTranscribeTestOrg"_s);
     QCoreApplication::setApplicationName(u"QTranscribeTestApp"_s);
 
-    m_controller = new SpeechController(this);
-    m_pipeline = new TranscriptionPipeline(this);
+    m_coordinator = new DictationCoordinator(this);
     m_recorder = new FakeAudioRecorder(this);
 
-    m_pipeline->setAudioRecorder(m_recorder);
-    m_controller->setPipeline(m_pipeline);
-    m_controller->initialize();
+    m_coordinator->setAudioRecorder(m_recorder);
+    m_coordinator->initialize();
 
     m_service = new StatusNotifierService(this);
-    QVERIFY(m_service->registerController(m_controller));
+    QVERIFY(m_service->registerController(m_coordinator));
 }
 
 void TestStatusNotifier::cleanupTestCase() {
     delete m_service;
-    delete m_controller;
+    delete m_coordinator;
 }
 
 void TestStatusNotifier::testRegistrationAndProperties() {
@@ -97,7 +93,7 @@ void TestStatusNotifier::testRegistrationAndProperties() {
 }
 
 void TestStatusNotifier::testActivation() {
-    QSignalSpy showSpy(m_controller, &SpeechController::requestShowWindow);
+    QSignalSpy showSpy(m_coordinator, &DictationCoordinator::requestShowWindow);
     QVERIFY(showSpy.isValid());
 
     QDBusInterface sniInterface(
@@ -120,11 +116,11 @@ void TestStatusNotifier::testDBusMenuLayoutAndEvents() {
     uint rev = m_service->revision();
     QVERIFY(rev >= 1);
 
-    QSignalSpy showSpy(m_controller, &SpeechController::requestShowWindow);
+    QSignalSpy showSpy(m_coordinator, &DictationCoordinator::requestShowWindow);
     menuInterface.call(u"Event"_s, 1, u"clicked"_s, QVariant::fromValue(QDBusVariant(0)), 0u);
     QCOMPARE(showSpy.count(), 1);
 
-    QSignalSpy quitSpy(m_controller, &SpeechController::requestQuitApp);
+    QSignalSpy quitSpy(m_coordinator, &DictationCoordinator::requestQuitApp);
     menuInterface.call(u"Event"_s, 3, u"clicked"_s, QVariant::fromValue(QDBusVariant(0)), 0u);
     QCOMPARE(quitSpy.count(), 1);
 }
@@ -136,10 +132,10 @@ void TestStatusNotifier::testRecordingStateUpdates() {
 
     QCOMPARE(sniInterface.property("IconName").toString(), u"io.github.qtranscribe"_s);
 
-    m_controller->startRecording();
+    m_coordinator->startRecording();
     QCOMPARE(sniInterface.property("IconName").toString(), u"io.github.qtranscribe"_s);
 
-    m_controller->stopRecording();
+    m_coordinator->stopRecording();
     QCOMPARE(sniInterface.property("IconName").toString(), u"io.github.qtranscribe"_s);
 }
 

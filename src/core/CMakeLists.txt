@@ -1,4 +1,6 @@
 add_library(qtranscribe_core STATIC
+    ApplicationContext.h
+    ApplicationContext.cpp
     AbstractSttClient.h
     AbstractSttClient.cpp
     AudioRecorder.h
@@ -31,10 +33,8 @@ add_library(qtranscribe_core STATIC
     DaemonConnector.cpp
     TextInjectorClient.h
     TextInjectorClient.cpp
-    SpeechController.h
-    SpeechController.cpp
-    TranscriptionPipeline.h
-    TranscriptionPipeline.cpp
+    DictationCoordinator.h
+    DictationCoordinator.cpp
     TranscriptionModel.h
     TranscriptionModel.cpp
     DBusService.h

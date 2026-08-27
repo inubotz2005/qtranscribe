@@ -31,7 +31,7 @@ Item {
     ClipboardWarningDialog {
         id: clipboardWarningDialog
         onAccepted: {
-            SpeechController.startRecording();
+            DictationCoordinator.startRecording();
         }
     }
 
@@ -79,7 +79,7 @@ Item {
             }
 
             StatusBanner {
-                visible: SpeechController.activeBackend === SpeechController.Groq && !GroqApiClient.apiKeySet
+                visible: DictationCoordinator.activeBackend === DictationCoordinator.Groq && !GroqApiClient.apiKeySet
                 bannerType: "warning"
                 title: qsTr("Groq API Key Required")
                 message: qsTr("Configure your free Groq API key in Settings to begin cloud speech transcription.")
@@ -88,7 +88,7 @@ Item {
             }
 
             StatusBanner {
-                visible: SpeechController.activeBackend === SpeechController.Groq && GroqApiClient.apiKeySet
+                visible: DictationCoordinator.activeBackend === DictationCoordinator.Groq && GroqApiClient.apiKeySet
                          && GroqSttClient.errorCategory === GroqSttClient.InvalidApiKey
                 bannerType: "warning"
                 title: qsTr("Invalid API Key")
@@ -97,21 +97,22 @@ Item {
                 actionText: qsTr("Configure API Key")
                 onActionClicked: root.navigateRequested("online")
                 secondaryActionText: qsTr("Dismiss")
-                onSecondaryActionClicked: SpeechController.clearError()
+                onSecondaryActionClicked: DictationCoordinator.clearError()
             }
 
             StatusBanner {
-                visible: SpeechController.activeBackend === SpeechController.Groq && GroqSttClient.errorCategory
-                         === GroqSttClient.RateLimited && GroqSttClient.retrySecondsRemaining > 0
+                visible: DictationCoordinator.activeBackend === DictationCoordinator.Groq
+                         && GroqSttClient.errorCategory === GroqSttClient.RateLimited
+                         && GroqSttClient.retrySecondsRemaining > 0
                 bannerType: "warning"
                 title: qsTr("Rate Limit Exceeded")
                 message: qsTr("Auto-retrying in %1s…").arg(GroqSttClient.retrySecondsRemaining)
                 actionText: qsTr("Dismiss")
-                onActionClicked: SpeechController.clearError()
+                onActionClicked: DictationCoordinator.clearError()
             }
 
             StatusBanner {
-                visible: SpeechController.activeBackend === SpeechController.WhisperCpp &&
+                visible: DictationCoordinator.activeBackend === DictationCoordinator.WhisperCpp &&
                          !WhisperSttClient.isModelInstalled
                 bannerType: "warning"
                 title: qsTr("Offline Whisper Model Missing")
@@ -121,7 +122,7 @@ Item {
             }
 
             StatusBanner {
-                visible: SpeechController.activeBackend === SpeechController.WhisperCpp
+                visible: DictationCoordinator.activeBackend === DictationCoordinator.WhisperCpp
                          && WhisperSttClient.isModelInstalled && !WhisperSttClient.isModelLoaded
                 bannerType: "info"
                 title: qsTr("Loading Whisper Model")
@@ -152,31 +153,28 @@ Item {
             }
 
             StatusBanner {
-                visible: SpeechController.dictationState === SpeechController.Error && (SpeechController.activeBackend
-                                                                                        !== SpeechController.Groq || (
-                                                                                            GroqSttClient.errorCategory
-                                                                                            !== GroqSttClient.InvalidApiKey
-                                                                                            && (GroqSttClient.errorCategory
-                                                                                                !== GroqSttClient.RateLimited
-                                                                                                || GroqSttClient.retrySecondsRemaining
-                                                                                                === 0)))
+                visible: DictationCoordinator.dictationState === DictationCoordinator.Error && (
+                             DictationCoordinator.activeBackend !== DictationCoordinator.Groq || (
+                                 GroqSttClient.errorCategory !== GroqSttClient.InvalidApiKey && (
+                                     GroqSttClient.errorCategory !== GroqSttClient.RateLimited
+                                     || GroqSttClient.retrySecondsRemaining === 0)))
                 bannerType: "danger"
-                title: SpeechController.activeBackend === SpeechController.WhisperCpp ? qsTr(
-                                                                                            "Offline Transcription Failed") :
-                                                                                        qsTr("Transcription Failed")
-                message: SpeechController.lastError.length > 0 ? SpeechController.lastError : qsTr(
-                                                                     "An error occurred during transcription.")
+                title: DictationCoordinator.activeBackend === DictationCoordinator.WhisperCpp ? qsTr(
+                                                                                                    "Offline Transcription Failed") :
+                                                                                                qsTr("Transcription Failed")
+                message: DictationCoordinator.lastError.length > 0 ? DictationCoordinator.lastError : qsTr(
+                                                                         "An error occurred during transcription.")
                 actionText: qsTr("Retry Transcription")
-                onActionClicked: SpeechController.retryTranscription()
+                onActionClicked: DictationCoordinator.retryTranscription()
                 secondaryActionText: qsTr("Dismiss")
-                onSecondaryActionClicked: SpeechController.clearError()
+                onSecondaryActionClicked: DictationCoordinator.clearError()
             }
 
             StyledCard {
                 Layout.fillWidth: true
                 customRadius: Theme.radiusMd
-                customBorderColor: SpeechController.recording ? Theme.colorDanger : Theme.cardBorder
-                customBorderWidth: SpeechController.recording ? 2 : 1
+                customBorderColor: DictationCoordinator.recording ? Theme.colorDanger : Theme.cardBorder
+                customBorderWidth: DictationCoordinator.recording ? 2 : 1
                 padding: Theme.spacingLg
 
                 Behavior on customBorderColor {
@@ -198,8 +196,8 @@ Item {
                             anchors.fill: parent
                             radius: width / 2
                             color: Theme.colorDanger
-                            opacity: SpeechController.recording ? 0.25 : 0.0
-                            visible: SpeechController.recording
+                            opacity: DictationCoordinator.recording ? 0.25 : 0.0
+                            visible: DictationCoordinator.recording
 
                             Behavior on opacity {
                                 NumberAnimation {
@@ -208,7 +206,7 @@ Item {
                             }
 
                             SequentialAnimation on scale {
-                                running: SpeechController.recording
+                                running: DictationCoordinator.recording
                                 loops: Animation.Infinite
                                 ScaleAnimator {
                                     to: 1.18
@@ -226,26 +224,27 @@ Item {
                             anchors.fill: parent
                             activeFocusOnTab: true
                             Accessible.role: Accessible.Button
-                            Accessible.name: SpeechController.recording ? qsTr("Stop Dictation") : (
-                                                                              SpeechController.recordingMode
-                                                                              === SpeechController.PushToTalk ? qsTr(
-                                                                                                                    "Push to Talk") :
-                                                                                                                qsTr("Start Dictation"))
-                            Accessible.description: SpeechController.recordingMode === SpeechController.PushToTalk
-                                                    ? qsTr("Push to talk speech recognition") : qsTr(
-                                                          "Toggle speech recognition recording")
-                            enabled: SpeechController.canRecord
+                            Accessible.name: DictationCoordinator.recording ? qsTr("Stop Dictation") : (
+                                                                                  DictationCoordinator.recordingMode
+                                                                                  === DictationCoordinator.PushToTalk
+                                                                                  ? qsTr("Push to Talk") : qsTr(
+                                                                                        "Start Dictation"))
+                            Accessible.description: DictationCoordinator.recordingMode
+                                                    === DictationCoordinator.PushToTalk ? qsTr(
+                                                                                              "Push to talk speech recognition") :
+                                                                                          qsTr("Toggle speech recognition recording")
+                            enabled: DictationCoordinator.canRecord
 
                             background: Rectangle {
                                 radius: recordBtn.width / 2
                                 color: {
                                     if (!recordBtn.enabled)
                                     return Theme.controlBg;
-                                    if (SpeechController.recording)
+                                    if (DictationCoordinator.recording)
                                     return recordBtn.down ? Theme.buttonDangerBgPressed : (recordBtn.hovered
                                                                                            ? Theme.buttonDangerBgHover :
                                                                                              Theme.buttonDangerBg);
-                                    if (SpeechController.isBusy)
+                                    if (DictationCoordinator.isBusy)
                                     return Theme.colorWarning;
                                     return recordBtn.down ? Theme.buttonPrimaryBgPressed : (recordBtn.hovered
                                                                                             ? Theme.buttonPrimaryBgHover :
@@ -277,7 +276,7 @@ Item {
                                         source: "qrc:/qt/qml/QTranscribe/assets/icons/mic.svg"
                                         sourceSize.width: 24
                                         sourceSize.height: 24
-                                        visible: !SpeechController.recording && !SpeechController.isBusy
+                                        visible: !DictationCoordinator.recording && !DictationCoordinator.isBusy
                                         smooth: true
                                     }
 
@@ -288,7 +287,7 @@ Item {
                                         source: "qrc:/qt/qml/QTranscribe/assets/icons/stop.svg"
                                         sourceSize.width: 22
                                         sourceSize.height: 22
-                                        visible: SpeechController.recording
+                                        visible: DictationCoordinator.recording
                                         smooth: true
                                     }
 
@@ -299,11 +298,11 @@ Item {
                                         source: "qrc:/qt/qml/QTranscribe/assets/icons/spinner.svg"
                                         sourceSize.width: 24
                                         sourceSize.height: 24
-                                        visible: SpeechController.isBusy
+                                        visible: DictationCoordinator.isBusy
                                         smooth: true
 
                                         RotationAnimation on rotation {
-                                            running: SpeechController.isBusy
+                                            running: DictationCoordinator.isBusy
                                             loops: Animation.Infinite
                                             from: 0
                                             to: 360
@@ -313,12 +312,12 @@ Item {
                                 }
 
                                 StyledText {
-                                    text: SpeechController.recording ? qsTr("Stop") : (SpeechController.isBusy ? qsTr(
-                                                                                                                     "Processing…") :
-                                                                                                                 (SpeechController.recordingMode
-                                                                                                                  === SpeechController.PushToTalk
-                                                                                                                  ? qsTr("Talk") :
-                                                                                                                    qsTr("Record")))
+                                    text: DictationCoordinator.recording ? qsTr("Stop") : (DictationCoordinator.isBusy
+                                                                                           ? qsTr("Processing…") : (
+                                                                                                 DictationCoordinator.recordingMode
+                                                                                                 === DictationCoordinator.PushToTalk
+                                                                                                 ? qsTr("Talk") : qsTr(
+                                                                                                       "Record")))
                                     variant: "caption"
                                     customWeight: Font.DemiBold
                                     colorRole: "onAccent"
@@ -328,10 +327,10 @@ Item {
                             }
 
                             onClicked: {
-                                if (!SpeechController.recording && TextInjectorClient.clipboardWarningRequired) {
+                                if (!DictationCoordinator.recording && TextInjectorClient.clipboardWarningRequired) {
                                     clipboardWarningDialog.open();
                                 } else {
-                                    SpeechController.toggleRecording();
+                                    DictationCoordinator.toggleRecording();
                                 }
                             }
                         }
@@ -341,7 +340,7 @@ Item {
                 Item {
                     Layout.fillWidth: true
                     implicitHeight: 32
-                    visible: SpeechController.recording
+                    visible: DictationCoordinator.recording
 
                     RowLayout {
                         anchors.centerIn: parent
@@ -375,7 +374,7 @@ Item {
                                     anchors.bottom: parent.bottom
                                     anchors.horizontalCenter: parent.horizontalCenter
                                     width: 4
-                                    height: Math.max(4, 28 * Math.min(SpeechController.audioLevel
+                                    height: Math.max(4, 28 * Math.min(DictationCoordinator.audioLevel
                                                                       * waveformBar.multiplier, 1.0))
 
                                     radius: Theme.radiusXs / 2
@@ -394,7 +393,7 @@ Item {
 
                 StyledText {
                     id: audioStatusText
-                    text: SpeechController.statusMessage
+                    text: DictationCoordinator.statusMessage
                     variant: "caption"
                     colorRole: "secondary"
                     horizontalAlignment: Text.AlignHCenter
@@ -405,19 +404,19 @@ Item {
 
                 StyledText {
                     id: modeHintText
-                    text: SpeechController.recordingMode === SpeechController.PushToTalk ? qsTr(
-                                                                                               "Push-to-Talk: Hold Ctrl+Shift+Space to talk") :
-                                                                                           qsTr("Toggle Mode: Press Ctrl+Shift+Space to start / stop")
+                    text: DictationCoordinator.recordingMode === DictationCoordinator.PushToTalk ? qsTr(
+                                                                                                       "Push-to-Talk: Hold Ctrl+Shift+Space to talk") :
+                                                                                                   qsTr("Toggle Mode: Press Ctrl+Shift+Space to start / stop")
                     variant: "caption"
                     colorRole: "secondary"
                     horizontalAlignment: Text.AlignHCenter
                     Layout.fillWidth: true
-                    visible: !SpeechController.recording && !SpeechController.isBusy
+                    visible: !DictationCoordinator.recording && !DictationCoordinator.isBusy
                 }
 
                 Item {
                     id: systemStatusContainer
-                    visible: SpeechController.systemShortcutHasIssue || SpeechController.directTypingHasIssue
+                    visible: DictationCoordinator.systemShortcutHasIssue || DictationCoordinator.directTypingHasIssue
                     Layout.fillWidth: true
                     implicitHeight: 32
 
@@ -438,7 +437,7 @@ Item {
 
                             RowLayout {
                                 id: shortcutStatusRow
-                                visible: SpeechController.systemShortcutHasIssue
+                                visible: DictationCoordinator.systemShortcutHasIssue
                                 spacing: 6
 
                                 StyledIcon {
@@ -454,13 +453,14 @@ Item {
                                     implicitHeight: 6
                                     radius: 3
                                     Layout.alignment: Qt.AlignVCenter
-                                    color: SpeechController.systemShortcutSupported ? Theme.colorWarning :
-                                                                                      Theme.colorDanger
+                                    color: DictationCoordinator.systemShortcutSupported ? Theme.colorWarning :
+                                                                                          Theme.colorDanger
                                 }
 
                                 StyledText {
-                                    text: SpeechController.systemShortcutStatus.length > 0
-                                          ? SpeechController.systemShortcutStatus : qsTr("Global shortcut unavailable")
+                                    text: DictationCoordinator.systemShortcutStatus.length > 0
+                                          ? DictationCoordinator.systemShortcutStatus : qsTr(
+                                                "Global shortcut unavailable")
                                     variant: "caption"
                                     colorRole: "secondary"
                                     Layout.alignment: Qt.AlignVCenter
@@ -469,7 +469,7 @@ Item {
                                 StyledButton {
                                     id: setupGuideBtn
                                     text: qsTr("Setup Guide")
-                                    visible: !SpeechController.systemShortcutSupported
+                                    visible: !DictationCoordinator.systemShortcutSupported
                                     variant: "flat"
                                     size: "small"
                                     onClicked: shortcutGuideDialog.open()
@@ -478,8 +478,8 @@ Item {
 
                             StyledDivider {
                                 id: statusDivider
-                                visible: SpeechController.systemShortcutHasIssue
-                                         && SpeechController.directTypingHasIssue
+                                visible: DictationCoordinator.systemShortcutHasIssue
+                                         && DictationCoordinator.directTypingHasIssue
                                 orientation: Qt.Vertical
                                 implicitHeight: 14
                                 Layout.alignment: Qt.AlignVCenter
@@ -487,7 +487,7 @@ Item {
 
                             RowLayout {
                                 id: directTypingStatusRow
-                                visible: SpeechController.directTypingHasIssue
+                                visible: DictationCoordinator.directTypingHasIssue
                                 spacing: 6
 
                                 StyledIcon {
@@ -503,12 +503,12 @@ Item {
                                     implicitHeight: 6
                                     radius: 3
                                     Layout.alignment: Qt.AlignVCenter
-                                    color: SpeechController.directTypingFatalError ? Theme.colorDanger :
-                                                                                     Theme.colorWarning
+                                    color: DictationCoordinator.directTypingFatalError ? Theme.colorDanger :
+                                                                                         Theme.colorWarning
                                 }
 
                                 StyledText {
-                                    text: SpeechController.directTypingStatus
+                                    text: DictationCoordinator.directTypingStatus
                                     variant: "caption"
                                     colorRole: "secondary"
                                     Layout.alignment: Qt.AlignVCenter
@@ -538,8 +538,8 @@ Item {
                     }
 
                     StyledText {
-                        text: qsTr("%1 words • %2 characters").arg(SpeechController.dictationWordCount).arg(
-                                  SpeechController.dictationCharCount)
+                        text: qsTr("%1 words • %2 characters").arg(DictationCoordinator.dictationWordCount).arg(
+                                  DictationCoordinator.dictationCharCount)
                         variant: "caption"
                         colorRole: "secondary"
                     }
@@ -552,7 +552,7 @@ Item {
 
                     T.TextArea {
                         id: testingGroundText
-                        text: SpeechController.dictationPadText
+                        text: DictationCoordinator.dictationPadText
                         placeholderText: qsTr("Text will appear here when dictating…")
                         placeholderTextColor: Theme.textPlaceholder
                         font.pixelSize: Theme.fontSizeBody
@@ -573,7 +573,7 @@ Item {
 
                         onTextChanged: {
                             if (activeFocus) {
-                                SpeechController.dictationPadText = text;
+                                DictationCoordinator.dictationPadText = text;
                             } else {
                                 cursorPosition = text.length;
                             }
@@ -582,7 +582,7 @@ Item {
                 }
 
                 Connections {
-                    target: SpeechController
+                    target: DictationCoordinator
                     function onDictationPadTextChanged(): void {
                         testingGroundText.cursorPosition = testingGroundText.text.length;
                     }
@@ -597,11 +597,11 @@ Item {
                         text: root.showCopySuccess ? qsTr("Copied!") : qsTr("Copy")
                         iconSource: root.showCopySuccess ? "qrc:/qt/qml/QTranscribe/assets/icons/check.svg" :
                                                            "qrc:/qt/qml/QTranscribe/assets/icons/copy.svg"
-                        enabled: SpeechController.dictationCharCount > 0
+                        enabled: DictationCoordinator.dictationCharCount > 0
                         size: "small"
                         variant: root.showCopySuccess ? "primary" : "secondary"
                         onClicked: {
-                            SpeechController.copyDictationPad();
+                            DictationCoordinator.copyDictationPad();
                             root.showCopySuccess = true;
                             copyFeedbackTimer.restart();
                         }
@@ -611,10 +611,10 @@ Item {
                         id: clearPadBtn
                         text: qsTr("Clear")
                         iconSource: "qrc:/qt/qml/QTranscribe/assets/icons/trash.svg"
-                        enabled: SpeechController.dictationCharCount > 0
+                        enabled: DictationCoordinator.dictationCharCount > 0
                         size: "small"
                         onClicked: {
-                            SpeechController.clearDictationPad();
+                            DictationCoordinator.clearDictationPad();
                         }
                     }
                 }

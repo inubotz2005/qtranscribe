@@ -3,7 +3,7 @@
 #include <QObject>
 #include <QString>
 
-class SpeechController;
+class DictationCoordinator;
 
 class DBusService : public QObject {
     Q_OBJECT
@@ -13,7 +13,7 @@ public:
     ~DBusService() override = default;
 
     bool registerService();
-    bool registerController(SpeechController* controller);
+    bool registerController(DictationCoordinator* coordinator);
     bool isRegistered() const;
 
     static bool sendRemoteCommand(const QString& method);

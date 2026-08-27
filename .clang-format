@@ -51,7 +51,7 @@ DerivePointerAlignment: false
 FixNamespaceComments: true
 IncludeBlocks: Regroup
 IncludeCategories:
-  - Regex: '^"(AudioRecorder|GroqApiClient|GroqSttClient|GroqLlmClient|SpeechController|TranscriptionModel|TextInjectorClient|ColorUtils|DBusService|ClipboardManager|DaemonConnector|ApiRequestHandler|GroqUsageTracker|LicenseHelper|ipc_server|uinput_device|capability|logging|LoggingCategories)\.h"'
+  - Regex: '^"(AudioRecorder|GroqApiClient|GroqSttClient|GroqLlmClient|DictationCoordinator|TranscriptionModel|TextInjectorClient|ColorUtils|DBusService|ClipboardManager|DaemonConnector|ApiRequestHandler|GroqUsageTracker|LicenseHelper|ipc_server|uinput_device|capability|logging|LoggingCategories)\.h"'
     Priority: 1
     SortPriority: 1
   - Regex: '^"(core|ui|keyinjectord|common)/.*"'

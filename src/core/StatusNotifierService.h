@@ -10,7 +10,7 @@
 #include <QString>
 #include <QVariantMap>
 
-class SpeechController;
+class DictationCoordinator;
 class StatusNotifierService;
 
 struct KDbusImageStruct {
@@ -165,8 +165,8 @@ public:
     explicit StatusNotifierService(QObject* parent = nullptr);
     ~StatusNotifierService() override;
 
-    bool registerController(SpeechController* controller);
-    SpeechController* controller() const { return m_controller; }
+    bool registerController(DictationCoordinator* coordinator);
+    DictationCoordinator* controller() const { return m_coordinator; }
 
     QString serviceName() const { return m_serviceName; }
     bool isRegistered() const { return m_registered; }
@@ -181,7 +181,7 @@ private Q_SLOTS:
 private:
     static void registerMetaTypes();
 
-    SpeechController* m_controller = nullptr;
+    DictationCoordinator* m_coordinator = nullptr;
     StatusNotifierItemAdaptor* m_sniAdaptor = nullptr;
     DBusMenuAdaptor* m_menuAdaptor = nullptr;
     QString m_serviceName;

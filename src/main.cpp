@@ -1,18 +1,7 @@
-#include "AudioRecorder.h"
 #include "DBusService.h"
-#include "GroqApiClient.h"
-#include "GroqLlmClient.h"
-#include "GroqSttClient.h"
-#include "GroqUsageTracker.h"
-#include "SpeechController.h"
-#include "TextInjectorClient.h"
-#include "TranscriptionModel.h"
+#include "DictationCoordinator.h"
 
-#include "GlobalShortcutManager.h"
-#include "StatusNotifierService.h"
-#include "TranscriptionPipeline.h"
-#include "WhisperModelManager.h"
-#include "WhisperSttClient.h"
+#include "ApplicationContext.h"
 
 #include <QCommandLineOption>
 #include <QCommandLineParser>
@@ -100,67 +89,28 @@ int main(int argc, char* argv[]) {
         &engine, &QQmlApplicationEngine::objectCreationFailed, &app, []() { QCoreApplication::exit(-1); },
         Qt::QueuedConnection);
 
-    auto* api = engine.singletonInstance<GroqApiClient*>("QTranscribe", "GroqApiClient");
-    auto* stt = engine.singletonInstance<GroqSttClient*>("QTranscribe", "GroqSttClient");
-    auto* whisperStt = engine.singletonInstance<WhisperSttClient*>("QTranscribe", "WhisperSttClient");
-    auto* whisperModels = engine.singletonInstance<WhisperModelManager*>("QTranscribe", "WhisperModelManager");
-    auto* llm = engine.singletonInstance<GroqLlmClient*>("QTranscribe", "GroqLlmClient");
-    auto* tracker = engine.singletonInstance<GroqUsageTracker*>("QTranscribe", "GroqUsageTracker");
-    auto* recorder = engine.singletonInstance<AudioRecorder*>("QTranscribe", "AudioRecorder");
-    auto* shortcut = engine.singletonInstance<GlobalShortcutManager*>("QTranscribe", "GlobalShortcutManager");
-    auto* injector = engine.singletonInstance<TextInjectorClient*>("QTranscribe", "TextInjectorClient");
-    auto* history = engine.singletonInstance<TranscriptionModel*>("QTranscribe", "TranscriptionModel");
-    auto* pipeline = new TranscriptionPipeline(&app);
-    auto* controller = engine.singletonInstance<SpeechController*>("QTranscribe", "SpeechController");
+    ApplicationContext appContext(&app);
+    appContext.initialize(engine);
 
-    if (stt && api)
-        stt->setApiClient(api);
-    if (whisperStt && whisperModels)
-        whisperStt->setModelManager(whisperModels);
-    if (llm && api)
-        llm->setApiClient(api);
-    if (tracker && api)
-        tracker->setApiClient(api);
-
-    if (pipeline) {
-        pipeline->setAudioRecorder(recorder);
-        pipeline->registerBackend(TranscriptionPipeline::Backend::Groq, stt);
-        pipeline->registerBackend(TranscriptionPipeline::Backend::WhisperCpp, whisperStt);
-        pipeline->setLlmClient(llm);
-    }
-
-    if (controller) {
-        if (pipeline) {
-            controller->setPipeline(pipeline);
-        }
-        controller->setApiClient(api);
-        controller->setShortcutManager(shortcut);
-        controller->setTextInjector(injector);
-        controller->setHistoryModel(history);
-        controller->initialize();
-        QObject::connect(controller, &SpeechController::requestQuitApp, []() { QCoreApplication::exit(0); });
-
-        auto* dbus = new DBusService(&app);
-        dbus->registerController(controller);
-
-        auto* sni = new StatusNotifierService(&app);
-        sni->registerController(controller);
+    auto* coordinator = appContext.dictationCoordinator();
+    if (coordinator) {
+        QObject::connect(coordinator, &DictationCoordinator::requestQuitApp, []() { QCoreApplication::exit(0); });
     }
 
     engine.loadFromModule("QTranscribe", "Main");
 
     if (parser.isSet(toggleOption) || parser.isSet(startOption)) {
-        QTimer::singleShot(200ms, [controller]() {
-            if (controller) {
-                controller->startRecording();
+        QTimer::singleShot(200ms, [coordinator]() {
+            if (coordinator) {
+                coordinator->startRecording();
             }
         });
     }
 
     if (parser.isSet(showOption)) {
-        QTimer::singleShot(100ms, [controller]() {
-            if (controller) {
-                controller->showWindow();
+        QTimer::singleShot(100ms, [coordinator]() {
+            if (coordinator) {
+                coordinator->showWindow();
             }
         });
     }

@@ -85,7 +85,7 @@ Item {
             description: qsTr("Choose how global shortcuts and recording triggers activate speech transcription")
 
             StatusBanner {
-                visible: !SpeechController.pushToTalkSupported
+                visible: !DictationCoordinator.pushToTalkSupported
                 bannerType: "warning"
                 title: qsTr("Push-to-Talk Unavailable on Current Desktop")
                 message: qsTr(
@@ -110,7 +110,8 @@ Item {
                                                                                                 Theme.cardBorder)
                     border.width: isSelected ? 2 : 1
 
-                    readonly property bool isSelected: SpeechController.recordingMode === SpeechController.Toggle
+                    readonly property bool isSelected: DictationCoordinator.recordingMode
+                                                       === DictationCoordinator.Toggle
 
                     Behavior on color {
                         ColorAnimation {
@@ -208,7 +209,7 @@ Item {
                         hoverEnabled: true
                         cursorShape: Qt.PointingHandCursor
                         onClicked: {
-                            SpeechController.recordingMode = SpeechController.Toggle;
+                            DictationCoordinator.recordingMode = DictationCoordinator.Toggle;
                         }
                     }
                 }
@@ -218,16 +219,17 @@ Item {
                     Layout.fillWidth: true
                     Layout.preferredHeight: pttContent.implicitHeight + (Theme.spacingMd * 2)
                     radius: Theme.radiusMd
-                    opacity: SpeechController.pushToTalkSupported ? 1.0 : 0.6
+                    opacity: DictationCoordinator.pushToTalkSupported ? 1.0 : 0.6
                     color: isSelected ? Theme.selectedBg : (pttMouse.containsMouse
-                                                            && SpeechController.pushToTalkSupported
+                                                            && DictationCoordinator.pushToTalkSupported
                                                             ? Theme.cardBgElevated : Theme.cardBgSubtle)
                     border.color: isSelected ? Theme.accentColor : (pttMouse.containsMouse
-                                                                    && SpeechController.pushToTalkSupported
+                                                                    && DictationCoordinator.pushToTalkSupported
                                                                     ? Theme.cardBorderHover : Theme.cardBorder)
                     border.width: isSelected ? 2 : 1
 
-                    readonly property bool isSelected: SpeechController.recordingMode === SpeechController.PushToTalk
+                    readonly property bool isSelected: DictationCoordinator.recordingMode
+                                                       === DictationCoordinator.PushToTalk
 
                     Behavior on color {
                         ColorAnimation {
@@ -293,7 +295,7 @@ Item {
                             StateBadge {
                                 text: qsTr("Unavailable")
                                 statusType: "warning"
-                                visible: !SpeechController.pushToTalkSupported
+                                visible: !DictationCoordinator.pushToTalkSupported
                                 showDot: false
                             }
                         }
@@ -329,12 +331,12 @@ Item {
                     MouseArea {
                         id: pttMouse
                         anchors.fill: parent
-                        hoverEnabled: SpeechController.pushToTalkSupported
-                        cursorShape: SpeechController.pushToTalkSupported ? Qt.PointingHandCursor : Qt.ArrowCursor
-                        enabled: SpeechController.pushToTalkSupported
+                        hoverEnabled: DictationCoordinator.pushToTalkSupported
+                        cursorShape: DictationCoordinator.pushToTalkSupported ? Qt.PointingHandCursor : Qt.ArrowCursor
+                        enabled: DictationCoordinator.pushToTalkSupported
                         onClicked: {
-                            if (SpeechController.pushToTalkSupported) {
-                                SpeechController.recordingMode = SpeechController.PushToTalk;
+                            if (DictationCoordinator.pushToTalkSupported) {
+                                DictationCoordinator.recordingMode = DictationCoordinator.PushToTalk;
                             }
                         }
                     }
@@ -350,9 +352,9 @@ Item {
                 id: soundSwitch
                 title: qsTr("Feedback Sounds")
                 description: qsTr("Play sound effects on recording start and completion")
-                checked: SpeechController.soundEnabled
+                checked: DictationCoordinator.soundEnabled
                 onToggled: {
-                    SpeechController.soundEnabled = soundSwitch.checked;
+                    DictationCoordinator.soundEnabled = soundSwitch.checked;
                 }
             }
 
@@ -361,8 +363,8 @@ Item {
             RowLayout {
                 Layout.fillWidth: true
                 spacing: Theme.spacingSm
-                opacity: SpeechController.soundEnabled ? 1.0 : 0.5
-                enabled: SpeechController.soundEnabled
+                opacity: DictationCoordinator.soundEnabled ? 1.0 : 0.5
+                enabled: DictationCoordinator.soundEnabled
 
                 StyledText {
                     text: qsTr("Preview:")
@@ -378,14 +380,14 @@ Item {
                     id: playStartBtn
                     text: qsTr("Play Start Sound")
                     size: "small"
-                    onClicked: SpeechController.playStartSound()
+                    onClicked: DictationCoordinator.playStartSound()
                 }
 
                 StyledButton {
                     id: playStopBtn
                     text: qsTr("Play Stop Sound")
                     size: "small"
-                    onClicked: SpeechController.playStopSound()
+                    onClicked: DictationCoordinator.playStopSound()
                 }
             }
         }
@@ -472,7 +474,7 @@ Item {
                     StyledButton {
                         id: testMicBtn
                         text: AudioRecorder.recording ? qsTr("Stop Test") : qsTr("Test Microphone")
-                        enabled: !SpeechController.isBusy || AudioRecorder.recording
+                        enabled: !DictationCoordinator.isBusy || AudioRecorder.recording
                         size: "small"
                         variant: AudioRecorder.recording ? "danger" : "secondary"
                         onClicked: {
@@ -790,7 +792,7 @@ Item {
                                 iconSource: "qrc:/qt/qml/QTranscribe/assets/icons/copy.svg"
                                 size: "small"
                                 onClicked: {
-                                    SpeechController.copyToClipboard("qtranscribe --toggle");
+                                    DictationCoordinator.copyToClipboard("qtranscribe --toggle");
                                 }
                             }
                         }

@@ -47,7 +47,7 @@ T.ApplicationWindow {
         case "enhancement":
             return "online";
         case "dictation":
-            return SpeechController.activeBackend === SpeechController.Groq ? "online" : "offline";
+            return DictationCoordinator.activeBackend === DictationCoordinator.Groq ? "online" : "offline";
         case "activity":
             return "cloudUsage";
         default:
@@ -77,7 +77,7 @@ T.ApplicationWindow {
     }
 
     Connections {
-        target: SpeechController
+        target: DictationCoordinator
         function onRequestShowWindow() {
             root.show();
             root.raise();
@@ -87,7 +87,7 @@ T.ApplicationWindow {
             root.quitApplication();
         }
         function onActiveBackendChanged() {
-            if (SpeechController.activeBackend === SpeechController.Groq) {
+            if (DictationCoordinator.activeBackend === DictationCoordinator.Groq) {
                 if (root.currentSectionId === "offline") {
                     root.currentSectionId = "online";
                 }
@@ -101,7 +101,7 @@ T.ApplicationWindow {
 
     NavigationModel {
         id: navModel
-        isOnline: SpeechController.activeBackend === SpeechController.Groq
+        isOnline: DictationCoordinator.activeBackend === DictationCoordinator.Groq
     }
 
     RowLayout {

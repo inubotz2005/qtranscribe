@@ -1,7 +1,7 @@
 #include "DBusService.h"
 
+#include "DictationCoordinator.h"
 #include "LoggingCategories.h"
-#include "SpeechController.h"
 
 #include <QDBusConnection>
 #include <QDBusInterface>
@@ -44,8 +44,8 @@ bool DBusService::registerService() {
     return true;
 }
 
-bool DBusService::registerController(SpeechController* controller) {
-    if (!controller || !QDBusConnection::sessionBus().isConnected()) {
+bool DBusService::registerController(DictationCoordinator* coordinator) {
+    if (!coordinator || !QDBusConnection::sessionBus().isConnected()) {
         return false;
     }
 
@@ -54,12 +54,12 @@ bool DBusService::registerController(SpeechController* controller) {
     }
 
     bool ok = QDBusConnection::sessionBus().registerObject(
-        kDbusObjectPath.toString(), kDbusInterfaceName.toString(), controller,
+        kDbusObjectPath.toString(), kDbusInterfaceName.toString(), coordinator,
         QDBusConnection::ExportAllSlots | QDBusConnection::ExportAllSignals | QDBusConnection::ExportAllInvokables);
 
     if (ok) {
         m_registered = true;
-        qCDebug(lcSpeech) << "DBusService: SpeechController exported to D-Bus at" << kDbusObjectPath;
+        qCDebug(lcSpeech) << "DBusService: DictationCoordinator exported to D-Bus at" << kDbusObjectPath;
     } else {
         qWarning() << "DBusService: Failed to register object on D-Bus";
     }

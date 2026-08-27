@@ -1,7 +1,7 @@
 #include "StatusNotifierService.h"
 
+#include "DictationCoordinator.h"
 #include "LoggingCategories.h"
-#include "SpeechController.h"
 
 #include <QCoreApplication>
 #include <QDBusConnection>
@@ -211,7 +211,7 @@ void DBusMenuAdaptor::Event(int id, const QString& eventId, const QDBusVariant& 
         if (id == 1) {
             m_service->controller()->showWindow();
         } else if (id == 3) {
-            m_service->controller()->requestQuitApp();
+            m_service->controller()->quitApp();
         }
     }
 }
@@ -347,13 +347,13 @@ StatusNotifierService::~StatusNotifierService() {
     }
 }
 
-bool StatusNotifierService::registerController(SpeechController* controller) {
-    if (!controller || !QDBusConnection::sessionBus().isConnected()) {
+bool StatusNotifierService::registerController(DictationCoordinator* coordinator) {
+    if (!coordinator || !QDBusConnection::sessionBus().isConnected()) {
         return false;
     }
 
-    m_controller = controller;
-    connect(m_controller, &SpeechController::recordingChanged, this, &StatusNotifierService::onRecordingChanged);
+    m_coordinator = coordinator;
+    connect(m_coordinator, &DictationCoordinator::recordingChanged, this, &StatusNotifierService::onRecordingChanged);
 
     m_serviceName = QString(u"org.kde.StatusNotifierItem-%1-1"_s).arg(QCoreApplication::applicationPid());
 

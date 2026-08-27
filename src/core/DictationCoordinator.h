@@ -1,18 +1,22 @@
 #pragma once
 
-#include "TranscriptionPipeline.h"
+#include "AbstractSttClient.h"
 
+#include <QByteArray>
+#include <QHash>
 #include <QObject>
 #include <QQmlEngine>
 #include <QString>
 
+class AudioRecorder;
 class GlobalShortcutManager;
 class GroqApiClient;
+class GroqLlmClient;
+class QSoundEffect;
 class TextInjectorClient;
 class TranscriptionModel;
-class QSoundEffect;
 
-class SpeechController : public QObject {
+class DictationCoordinator : public QObject {
     Q_OBJECT
     QML_ELEMENT
     QML_SINGLETON
@@ -55,12 +59,12 @@ public:
     Q_PROPERTY(int dictationCharCount READ dictationCharCount NOTIFY dictationPadTextChanged FINAL)
 
 public:
-    explicit SpeechController(QObject* parent = nullptr);
-    ~SpeechController() override = default;
+    explicit DictationCoordinator(QObject* parent = nullptr);
+    ~DictationCoordinator() override = default;
 
-    void setPipeline(TranscriptionPipeline* pipeline);
-    TranscriptionPipeline* pipeline() const;
-
+    void setAudioRecorder(AudioRecorder* recorder);
+    void registerBackend(TranscriptionBackend backend, AbstractSttClient* client);
+    void setLlmClient(GroqLlmClient* llmClient);
     void setApiClient(GroqApiClient* api);
     void setShortcutManager(GlobalShortcutManager* mgr);
     void setTextInjector(TextInjectorClient* injector);
@@ -99,6 +103,8 @@ public:
     int dictationWordCount() const;
     int dictationCharCount() const;
 
+    AbstractSttClient* activeSttClient() const;
+
 public slots:
     void initialize();
     void appendDictationPadText(const QString& text);
@@ -136,23 +142,35 @@ signals:
     void systemHealthChanged();
     void dictationPadTextChanged();
 
+    void transcriptionFinished(const QString& text);
+    void errorOccurred(const QString& error);
     void requestShowWindow();
     void requestQuitApp();
     void maxDurationWarningTriggered();
     void llmFallbackWarningTriggered(const QString& warning);
 
 private slots:
+    void onRecordingFinished(const QByteArray& wavData);
+    void onMaxDurationReached();
+    void onSttTranscriptionReady(const QString& text);
+    void onSttError(const QString& error);
+    void onLlmEnhancementReady(const QString& enhancedText);
+    void onLlmError(const QString& error, const QString& fallbackRawText);
     void onShortcutActivated(const QString& shortcutId);
     void onShortcutDeactivated(const QString& shortcutId);
-    void onPipelineTranscriptionFinished(const QString& text);
-    void onPipelineStateChanged(TranscriptionPipeline::State state);
-    void updatePresenterState();
+    void updateCoordinatorHealth();
 
 private:
+    void setState(DictationState state);
+    void setStatusMessage(const QString& msg);
+    void setLastError(const QString& error);
+    void completeTranscription(const QString& text);
     void finishTranscriptionAndInject(const QString& text);
     static int calculateWordCount(const QString& text);
 
-    TranscriptionPipeline* m_pipeline = nullptr;
+    AudioRecorder* m_recorder = nullptr;
+    QHash<TranscriptionBackend, AbstractSttClient*> m_sttClients;
+    GroqLlmClient* m_llmClient = nullptr;
     GroqApiClient* m_apiClient = nullptr;
     GlobalShortcutManager* m_shortcutMgr = nullptr;
     TextInjectorClient* m_injector = nullptr;
@@ -160,8 +178,17 @@ private:
     QSoundEffect* m_startChime = nullptr;
     QSoundEffect* m_stopChime = nullptr;
 
+    TranscriptionBackend m_activeBackend = TranscriptionBackend::WhisperCpp;
+    DictationState m_state = DictationState::Idle;
+    RecordingMode m_recordingMode = RecordingMode::Toggle;
+    QString m_statusMessage;
+    QString m_lastError;
+    QString m_lastTranscription;
+    QByteArray m_lastWavData;
+    QString m_dictationPadText;
+
     bool m_soundEnabled = true;
     bool m_initialized = false;
-    RecordingMode m_recordingMode = RecordingMode::Toggle;
-    QString m_dictationPadText;
+
+    friend class TestDictationCoordinator;
 };

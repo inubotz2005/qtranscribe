@@ -28,7 +28,7 @@ StyledCard {
                                                                                        Theme.cardBorder)
             border.width: isSelected ? 2 : 1
 
-            readonly property bool isSelected: SpeechController.activeBackend === SpeechController.Groq
+            readonly property bool isSelected: DictationCoordinator.activeBackend === DictationCoordinator.Groq
 
             Behavior on color {
                 ColorAnimation {
@@ -126,8 +126,8 @@ StyledCard {
                 hoverEnabled: true
                 cursorShape: Qt.PointingHandCursor
                 onClicked: {
-                    if (SpeechController.activeBackend !== SpeechController.Groq) {
-                        SpeechController.activeBackend = SpeechController.Groq;
+                    if (DictationCoordinator.activeBackend !== DictationCoordinator.Groq) {
+                        DictationCoordinator.activeBackend = DictationCoordinator.Groq;
                     }
                 }
             }
@@ -145,7 +145,7 @@ StyledCard {
                                                                                          Theme.cardBorder)
             border.width: isSelected ? 2 : 1
 
-            readonly property bool isSelected: SpeechController.activeBackend === SpeechController.WhisperCpp
+            readonly property bool isSelected: DictationCoordinator.activeBackend === DictationCoordinator.WhisperCpp
 
             Behavior on color {
                 ColorAnimation {
@@ -243,8 +243,8 @@ StyledCard {
                 hoverEnabled: true
                 cursorShape: Qt.PointingHandCursor
                 onClicked: {
-                    if (SpeechController.activeBackend !== SpeechController.WhisperCpp) {
-                        SpeechController.activeBackend = SpeechController.WhisperCpp;
+                    if (DictationCoordinator.activeBackend !== DictationCoordinator.WhisperCpp) {
+                        DictationCoordinator.activeBackend = DictationCoordinator.WhisperCpp;
                     }
                 }
             }

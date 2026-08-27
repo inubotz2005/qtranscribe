@@ -132,10 +132,7 @@ bool StatusNotifierItemAdaptor::itemIsMenu() const {
 }
 
 QString StatusNotifierItemAdaptor::iconName() const {
-    if (m_service->controller() && m_service->controller()->recording()) {
-        return u"qtranscribe-tray-recording"_s;
-    }
-    return u"qtranscribe-tray"_s;
+    return u"io.github.qtranscribe"_s;
 }
 
 KDbusImageVector StatusNotifierItemAdaptor::iconPixmap() const {
@@ -165,7 +162,7 @@ QString StatusNotifierItemAdaptor::attentionMovieName() const {
 KDbusToolTipStruct StatusNotifierItemAdaptor::toolTip() const {
     KDbusToolTipStruct tip;
     const bool rec = m_service->controller() && m_service->controller()->recording();
-    tip.icon = rec ? u"qtranscribe-tray-recording"_s : u"qtranscribe-tray"_s;
+    tip.icon = u"io.github.qtranscribe"_s;
     tip.title = u"QTranscribe"_s;
     tip.subTitle = rec ? u"Recording..."_s : u"Ready"_s;
     return tip;
@@ -187,9 +184,6 @@ void StatusNotifierItemAdaptor::Activate(int x, int y) {
 void StatusNotifierItemAdaptor::SecondaryActivate(int x, int y) {
     Q_UNUSED(x);
     Q_UNUSED(y);
-    if (m_service->controller()) {
-        m_service->controller()->toggleRecording();
-    }
 }
 
 void StatusNotifierItemAdaptor::Scroll(int delta, const QString& orientation) {
@@ -215,10 +209,8 @@ void DBusMenuAdaptor::Event(int id, const QString& eventId, const QDBusVariant& 
     Q_UNUSED(timestamp);
     if (eventId == u"clicked"_s && m_service->controller()) {
         if (id == 1) {
-            m_service->controller()->toggleRecording();
-        } else if (id == 2) {
             m_service->controller()->showWindow();
-        } else if (id == 4) {
+        } else if (id == 3) {
             m_service->controller()->requestQuitApp();
         }
     }
@@ -240,27 +232,19 @@ bool DBusMenuAdaptor::AboutToShowGroup(const QList<int>& ids, QList<int>& update
 }
 
 QDBusVariant DBusMenuAdaptor::GetProperty(int id, const QString& name) {
-    const bool rec = m_service->controller() && m_service->controller()->recording();
     if (id == 1) {
-        if (name == u"label"_s)
-            return QDBusVariant(rec ? u"Stop Dictation"_s : u"Start Dictation"_s);
-        if (name == u"enabled"_s)
-            return QDBusVariant(true);
-        if (name == u"visible"_s)
-            return QDBusVariant(true);
-    } else if (id == 2) {
         if (name == u"label"_s)
             return QDBusVariant(u"Open QTranscribe"_s);
         if (name == u"enabled"_s)
             return QDBusVariant(true);
         if (name == u"visible"_s)
             return QDBusVariant(true);
-    } else if (id == 3) {
+    } else if (id == 2) {
         if (name == u"type"_s)
             return QDBusVariant(u"separator"_s);
         if (name == u"visible"_s)
             return QDBusVariant(true);
-    } else if (id == 4) {
+    } else if (id == 3) {
         if (name == u"label"_s)
             return QDBusVariant(u"Quit"_s);
         if (name == u"enabled"_s)
@@ -284,32 +268,23 @@ uint DBusMenuAdaptor::GetLayout(int parentId, int recursionDepth, const QStringL
         return m_service->revision();
     }
 
-    const bool rec = m_service->controller() && m_service->controller()->recording();
-
-    DBusMenuLayoutItem toggleItem;
-    toggleItem.id = 1;
-    toggleItem.properties[u"label"_s] = rec ? u"Stop Dictation"_s : u"Start Dictation"_s;
-    toggleItem.properties[u"enabled"_s] = true;
-    toggleItem.properties[u"visible"_s] = true;
-
     DBusMenuLayoutItem showItem;
-    showItem.id = 2;
+    showItem.id = 1;
     showItem.properties[u"label"_s] = u"Open QTranscribe"_s;
     showItem.properties[u"enabled"_s] = true;
     showItem.properties[u"visible"_s] = true;
 
     DBusMenuLayoutItem sepItem;
-    sepItem.id = 3;
+    sepItem.id = 2;
     sepItem.properties[u"type"_s] = u"separator"_s;
     sepItem.properties[u"visible"_s] = true;
 
     DBusMenuLayoutItem quitItem;
-    quitItem.id = 4;
+    quitItem.id = 3;
     quitItem.properties[u"label"_s] = u"Quit"_s;
     quitItem.properties[u"enabled"_s] = true;
     quitItem.properties[u"visible"_s] = true;
 
-    layout.children.append(toggleItem);
     layout.children.append(showItem);
     layout.children.append(sepItem);
     layout.children.append(quitItem);
@@ -320,23 +295,18 @@ uint DBusMenuAdaptor::GetLayout(int parentId, int recursionDepth, const QStringL
 DBusMenuItemList DBusMenuAdaptor::GetGroupProperties(const QList<int>& ids, const QStringList& propertyNames) {
     Q_UNUSED(propertyNames);
     DBusMenuItemList list;
-    const bool rec = m_service->controller() && m_service->controller()->recording();
 
     for (int id : ids) {
         DBusMenuItem item;
         item.id = id;
         if (id == 1) {
-            item.properties[u"label"_s] = rec ? u"Stop Dictation"_s : u"Start Dictation"_s;
-            item.properties[u"enabled"_s] = true;
-            item.properties[u"visible"_s] = true;
-        } else if (id == 2) {
             item.properties[u"label"_s] = u"Open QTranscribe"_s;
             item.properties[u"enabled"_s] = true;
             item.properties[u"visible"_s] = true;
-        } else if (id == 3) {
+        } else if (id == 2) {
             item.properties[u"type"_s] = u"separator"_s;
             item.properties[u"visible"_s] = true;
-        } else if (id == 4) {
+        } else if (id == 3) {
             item.properties[u"label"_s] = u"Quit"_s;
             item.properties[u"enabled"_s] = true;
             item.properties[u"visible"_s] = true;

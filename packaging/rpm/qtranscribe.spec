@@ -69,7 +69,6 @@ QT_QPA_PLATFORM=offscreen %ctest
 %{_datadir}/applications/io.github.qtranscribe.desktop
 %{_datadir}/icons/hicolor/*/apps/io.github.qtranscribe.png
 %{_datadir}/icons/hicolor/*/apps/qtranscribe.png
-%{_datadir}/icons/hicolor/*/status/qtranscribe-tray*.svg
 
 %changelog
 * Thu Aug 27 2026 QTranscribe Developers <support@qtranscribe.org> - 1.2.0-1

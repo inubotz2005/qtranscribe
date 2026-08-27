@@ -288,8 +288,7 @@ Item {
                     badgeText: qsTr("CC BY 4.0 / SIL OFL")
                     url: "https://github.com/FortAwesome/Font-Awesome"
                     urlLabel: "FortAwesome/Font-Awesome"
-                    description: qsTr(
-                                     "Vector icon assets for UI controls, action buttons, and system tray recording status indicators.")
+                    description: qsTr("Vector icon assets for UI controls and action buttons.")
                 }
 
                 StyledDivider {}

@@ -92,7 +92,7 @@ void TestStatusNotifier::testRegistrationAndProperties() {
     QCOMPARE(sniInterface.property("Id").toString(), u"qtranscribe"_s);
     QCOMPARE(sniInterface.property("Title").toString(), u"QTranscribe"_s);
     QCOMPARE(sniInterface.property("Status").toString(), u"Active"_s);
-    QCOMPARE(sniInterface.property("IconName").toString(), u"qtranscribe-tray"_s);
+    QCOMPARE(sniInterface.property("IconName").toString(), u"io.github.qtranscribe"_s);
     QCOMPARE(sniInterface.property("Menu").value<QDBusObjectPath>().path(), u"/MenuBar"_s);
 }
 
@@ -121,11 +121,11 @@ void TestStatusNotifier::testDBusMenuLayoutAndEvents() {
     QVERIFY(rev >= 1);
 
     QSignalSpy showSpy(m_controller, &SpeechController::requestShowWindow);
-    menuInterface.call(u"Event"_s, 2, u"clicked"_s, QVariant::fromValue(QDBusVariant(0)), 0u);
+    menuInterface.call(u"Event"_s, 1, u"clicked"_s, QVariant::fromValue(QDBusVariant(0)), 0u);
     QCOMPARE(showSpy.count(), 1);
 
     QSignalSpy quitSpy(m_controller, &SpeechController::requestQuitApp);
-    menuInterface.call(u"Event"_s, 4, u"clicked"_s, QVariant::fromValue(QDBusVariant(0)), 0u);
+    menuInterface.call(u"Event"_s, 3, u"clicked"_s, QVariant::fromValue(QDBusVariant(0)), 0u);
     QCOMPARE(quitSpy.count(), 1);
 }
 
@@ -134,13 +134,13 @@ void TestStatusNotifier::testRecordingStateUpdates() {
         m_service->serviceName(), u"/StatusNotifierItem"_s, u"org.kde.StatusNotifierItem"_s,
         QDBusConnection::sessionBus());
 
-    QCOMPARE(sniInterface.property("IconName").toString(), u"qtranscribe-tray"_s);
+    QCOMPARE(sniInterface.property("IconName").toString(), u"io.github.qtranscribe"_s);
 
     m_controller->startRecording();
-    QCOMPARE(sniInterface.property("IconName").toString(), u"qtranscribe-tray-recording"_s);
+    QCOMPARE(sniInterface.property("IconName").toString(), u"io.github.qtranscribe"_s);
 
     m_controller->stopRecording();
-    QCOMPARE(sniInterface.property("IconName").toString(), u"qtranscribe-tray"_s);
+    QCOMPARE(sniInterface.property("IconName").toString(), u"io.github.qtranscribe"_s);
 }
 
 int main(int argc, char* argv[]) {

@@ -41,7 +41,6 @@ add_library(qtranscribe_core STATIC
     DBusService.cpp
     LoggingCategories.h
     LoggingCategories.cpp
-    TrayIconHelper.h
     LicenseHelper.h
     ColorUtils.h
     ColorUtils.cpp

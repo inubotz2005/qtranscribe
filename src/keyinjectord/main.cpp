@@ -89,7 +89,7 @@ int main(int argc, char* argv[]) {
     KEYINJECTORD_LOG_DEBUG("Starting with delay=%dms, socket-fd=%d", delayMs, socketFd);
 
     int uinputFd;
-    {
+    try {
         KEYINJECTORD_LOG_DEBUG("Opening /dev/uinput with capability...");
         keyinjectord::CapabilityGuard capGuard;
 
@@ -99,6 +99,10 @@ int main(int argc, char* argv[]) {
             KEYINJECTORD_LOG_ERROR("Did you run: sudo setcap \"cap_dac_override+p\" %s ?", argv[0]);
             return 1;
         }
+    } catch (const std::exception& e) {
+        KEYINJECTORD_LOG_ERROR("Capability error while opening /dev/uinput: %s", e.what());
+        KEYINJECTORD_LOG_ERROR("Did you run: sudo setcap \"cap_dac_override+p\" %s ?", argv[0]);
+        return 1;
     }
 
     KEYINJECTORD_LOG_DEBUG("/dev/uinput opened successfully (fd=%d)", uinputFd);

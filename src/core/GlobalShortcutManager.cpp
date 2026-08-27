@@ -2,17 +2,12 @@
 
 #include "LoggingCategories.h"
 
-#include <QCoreApplication>
 #include <QDBusConnection>
 #include <QDBusMessage>
 #include <QDBusMetaType>
 #include <QDBusObjectPath>
 #include <QDebug>
-#include <QDir>
-#include <QFile>
 #include <QRandomGenerator>
-#include <QStandardPaths>
-#include <QTextStream>
 #include <QTimer>
 
 #include <algorithm>
@@ -91,83 +86,7 @@ void GlobalShortcutManager::requestShortcuts() {
 
 namespace {
 const auto kApplicationId = u"io.github.qtranscribe"_s;
-const auto kDesktopFileName = u"io.github.qtranscribe.desktop"_s;
-const auto kLegacyDesktopFileName = u"qtranscribe.desktop"_s;
 } // namespace
-
-void GlobalShortcutManager::ensureIconExists() {
-    const QString iconsBaseDir = QStandardPaths::writableLocation(QStandardPaths::GenericDataLocation);
-    if (iconsBaseDir.isEmpty()) {
-        return;
-    }
-
-    const QString userIconsDir = iconsBaseDir + u"/icons/hicolor/128x128/apps"_s;
-    QDir dir(userIconsDir);
-    if (!dir.exists()) {
-        dir.mkpath(u"."_s);
-    }
-
-    const QString iconPath = dir.filePath(u"io.github.qtranscribe.png"_s);
-    if (!QFile::exists(iconPath)) {
-        if (QFile::copy(u":/qt/qml/QTranscribe/assets/speech-to-text-128.png"_s, iconPath)) {
-            qCDebug(lcShortcut) << "Exported app icon to:" << iconPath;
-        }
-    }
-
-    const QString legacyIconPath = dir.filePath(u"qtranscribe.png"_s);
-    if (!QFile::exists(legacyIconPath)) {
-        QFile::copy(u":/qt/qml/QTranscribe/assets/speech-to-text-128.png"_s, legacyIconPath);
-    }
-}
-
-void GlobalShortcutManager::ensureDesktopFileExists() {
-    ensureIconExists();
-
-    const QString userAppsDir = QStandardPaths::writableLocation(QStandardPaths::ApplicationsLocation);
-    if (userAppsDir.isEmpty()) {
-        qWarning() << "GlobalShortcutManager: ApplicationsLocation directory is empty";
-        return;
-    }
-
-    QDir dir(userAppsDir);
-    if (!dir.exists()) {
-        dir.mkpath(u"."_s);
-    }
-
-    const QString desktopFilePath = dir.filePath(kDesktopFileName);
-    const QString appPath = QCoreApplication::applicationFilePath();
-
-    bool needsWrite = true;
-    if (QFile::exists(desktopFilePath)) {
-        QFile existingFile(desktopFilePath);
-        if (existingFile.open(QIODevice::ReadOnly | QIODevice::Text)) {
-            QString content = QString::fromUtf8(existingFile.readAll());
-            existingFile.close();
-            if (content.contains(u"Exec=" + appPath) && content.contains(u"StartupWMClass=io.github.qtranscribe"_s) &&
-                content.contains(u"Icon=io.github.qtranscribe"_s)) {
-                qCDebug(lcShortcut) << "Desktop file is up to date:" << desktopFilePath;
-                needsWrite = false;
-            }
-        }
-    }
-
-    if (needsWrite) {
-        QFile file(desktopFilePath);
-        if (file.open(QIODevice::WriteOnly | QIODevice::Text)) {
-            QTextStream out(&file);
-            out << u"[Desktop Entry]\n"_s << u"Type=Application\n"_s << u"Name=QTranscribe\n"_s << u"Exec="_s << appPath
-                << u"\n"_s << u"Icon=io.github.qtranscribe\n"_s << u"Categories=Utility;\n"_s << u"Terminal=false\n"_s
-                << u"StartupWMClass=io.github.qtranscribe\n"_s << u"Comment=Speech to Text Application\n"_s;
-            file.close();
-            qCDebug(lcShortcut) << "Created/updated desktop file at" << desktopFilePath << "with Exec =" << appPath;
-        }
-    }
-
-    const QString legacyDesktopFilePath = dir.filePath(kLegacyDesktopFileName);
-    if (QFile::exists(legacyDesktopFilePath)) {
-        QFile::remove(legacyDesktopFilePath);
-    }
-}
 
 void GlobalShortcutManager::registerHostApp() {
     if (!QDBusConnection::sessionBus().isConnected()) {
@@ -219,7 +138,6 @@ void GlobalShortcutManager::initializePortal() {
         return;
     }
 
-    ensureDesktopFileExists();
     registerHostApp();
     createSession();
 }

@@ -66,8 +66,6 @@ private:
     void registerHostApp();
     void createSession();
     void bindShortcuts();
-    void ensureDesktopFileExists();
-    void ensureIconExists();
 
     QDBusObjectPath m_sessionHandle;
     bool m_available = false;

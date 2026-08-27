@@ -2,7 +2,6 @@ pragma ComponentBehavior: Bound
 import QtQuick
 import QtQuick.Templates as T
 import QtQuick.Layouts
-import Qt.labs.platform as Platform
 import QTranscribe
 import "controls"
 import "settings"
@@ -74,39 +73,6 @@ T.ApplicationWindow {
         if (!root.isQuitting) {
             close.accepted = false;
             root.hide();
-        }
-    }
-
-    Platform.SystemTrayIcon {
-        id: trayIcon
-        visible: true
-        icon.name: SpeechController.recording ? TrayIconHelper.trayIconRecordingName : TrayIconHelper.trayIconName
-        icon.source: SpeechController.recording ? TrayIconHelper.trayIconRecordingPath(Theme.isDark) :
-                                                  TrayIconHelper.trayIconPath(Theme.isDark)
-        tooltip: qsTr("QTranscribe")
-
-        menu: Platform.Menu {
-            Platform.MenuItem {
-                text: qsTr("Open QTranscribe")
-                onTriggered: {
-                    root.show();
-                    root.raise();
-                    root.requestActivate();
-                }
-            }
-            Platform.MenuItem {
-                text: qsTr("Quit")
-                onTriggered: root.quitApplication()
-            }
-        }
-
-        onActivated: activationReason => {
-            if (activationReason === Platform.SystemTrayIcon.Trigger || activationReason
-                    === Platform.SystemTrayIcon.DoubleClick) {
-                root.show();
-                root.raise();
-                root.requestActivate();
-            }
         }
     }
 

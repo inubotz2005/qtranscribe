@@ -47,6 +47,8 @@ add_library(qtranscribe_core STATIC
     ColorUtils.cpp
     NavigationModel.h
     NavigationModel.cpp
+    StatusNotifierService.h
+    StatusNotifierService.cpp
 )
 
 target_include_directories(qtranscribe_core

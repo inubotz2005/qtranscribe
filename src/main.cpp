@@ -9,6 +9,7 @@
 #include "TranscriptionModel.h"
 
 #include "GlobalShortcutManager.h"
+#include "StatusNotifierService.h"
 #include "TranscriptionPipeline.h"
 #include "WhisperModelManager.h"
 #include "WhisperSttClient.h"
@@ -141,6 +142,9 @@ int main(int argc, char* argv[]) {
 
         auto* dbus = new DBusService(&app);
         dbus->registerController(controller);
+
+        auto* sni = new StatusNotifierService(&app);
+        sni->registerController(controller);
     }
 
     engine.loadFromModule("QTranscribe", "Main");

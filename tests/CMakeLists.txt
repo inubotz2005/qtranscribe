@@ -196,6 +196,31 @@ add_test(
     COMMAND test_speech_controller
 )
 
+qt_add_executable(test_status_notifier
+    test_status_notifier.cpp
+)
+
+target_link_libraries(test_status_notifier
+    PRIVATE
+        qtranscribe_core
+        Qt6::Core
+        Qt6::Gui
+        Qt6::Test
+        Qt6::Network
+        Qt6::DBus
+)
+
+target_include_directories(test_status_notifier
+    PRIVATE
+        ${CMAKE_SOURCE_DIR}/src
+        ${CMAKE_SOURCE_DIR}/src/core
+)
+
+add_test(
+    NAME StatusNotifierTest
+    COMMAND test_status_notifier
+)
+
 set_tests_properties(
     WhisperPipelineTest
     WhisperStorageTest
@@ -204,6 +229,7 @@ set_tests_properties(
     GroqApiClientTest
     IpcServerTest
     SpeechControllerTest
+    StatusNotifierTest
     PROPERTIES
         ENVIRONMENT "QT_QPA_PLATFORM=offscreen;QT_MEDIA_BACKEND=null;LD_LIBRARY_PATH=${QT_TEST_LD_PREPEND}$ENV{LD_LIBRARY_PATH}"
 )

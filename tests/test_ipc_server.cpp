@@ -308,14 +308,156 @@ private slots:
         std::filesystem::remove_all(testDir, ec);
     }
 
+    void testValidateExecutableTopologyRejectsGroupWritableInProduction() {
+        const std::filesystem::path selfPath = currentExePath();
+        QVERIFY(!selfPath.empty());
+
+        std::filesystem::path testDir = selfPath.parent_path() / "test_isolated_group_writable_dir";
+        std::filesystem::create_directories(testDir);
+
+        std::filesystem::path mockSelf = testDir / "test_ipc_server";
+        FILE* fSelf = fopen(mockSelf.c_str(), "w");
+        QVERIFY(fSelf != nullptr);
+        fclose(fSelf);
+
+        std::filesystem::path mockParent = testDir / "qtranscribe";
+        FILE* fParent = fopen(mockParent.c_str(), "w");
+        QVERIFY(fParent != nullptr);
+        fclose(fParent);
+
+        QCOMPARE(::chmod(mockParent.c_str(), 0775), 0);
+
+        keyinjectord::AuthResult res = keyinjectord::AuthResult::Success;
+        // When rejectGroupWritable is true (as in production), group-writable must be rejected
+        bool ok = keyinjectord::validateExecutableTopology(mockParent, mockSelf, &res, /*allowDevMode=*/true,
+                                                           /*outParentStat=*/nullptr, /*rejectGroupWritable=*/true);
+        QVERIFY(!ok);
+        QCOMPARE(res, keyinjectord::AuthResult::GroupWritable);
+
+        std::error_code ec;
+        std::filesystem::remove_all(testDir, ec);
+    }
+
+    void testValidateExecutableTopologyRejectsNonRootOwnerInProduction() {
+        const std::filesystem::path selfPath = currentExePath();
+        QVERIFY(!selfPath.empty());
+
+        std::filesystem::path testDir = selfPath.parent_path() / "test_isolated_non_root_dir";
+        std::filesystem::create_directories(testDir);
+
+        std::filesystem::path mockSelf = testDir / "test_ipc_server";
+        FILE* fSelf = fopen(mockSelf.c_str(), "w");
+        QVERIFY(fSelf != nullptr);
+        fclose(fSelf);
+
+        std::filesystem::path mockParent = testDir / "qtranscribe";
+        FILE* fParent = fopen(mockParent.c_str(), "w");
+        QVERIFY(fParent != nullptr);
+        fclose(fParent);
+
+        ::chmod(mockParent.c_str(), 0755);
+        ::chmod(mockSelf.c_str(), 0755);
+        ::chmod(testDir.c_str(), 0755);
+
+        if (::getuid() == 0) {
+            // When running as root (e.g. in container build / rpmbuild), root-owned files pass in production mode
+            keyinjectord::AuthResult rootRes = keyinjectord::AuthResult::InvalidFd;
+            bool rootOk =
+                keyinjectord::validateExecutableTopology(mockParent, mockSelf, &rootRes, /*allowDevMode=*/false);
+            QVERIFY(rootOk);
+            QCOMPARE(rootRes, keyinjectord::AuthResult::Success);
+
+            // Chown mockParent to non-root UID 1000 to verify rejection as NonRootOwner
+            if (::chown(mockParent.c_str(), 1000, 1000) == 0) {
+                keyinjectord::AuthResult nonRootRes = keyinjectord::AuthResult::Success;
+                bool nonRootOk =
+                    keyinjectord::validateExecutableTopology(mockParent, mockSelf, &nonRootRes, /*allowDevMode=*/false);
+                QVERIFY(!nonRootOk);
+                QCOMPARE(nonRootRes, keyinjectord::AuthResult::NonRootOwner);
+            }
+        } else {
+            keyinjectord::AuthResult res = keyinjectord::AuthResult::Success;
+            // In strict production mode (allowDevMode = false), user-owned files in /home/dev are rejected as NonRootOwner
+            bool ok = keyinjectord::validateExecutableTopology(mockParent, mockSelf, &res, /*allowDevMode=*/false);
+            QVERIFY(!ok);
+            QCOMPARE(res, keyinjectord::AuthResult::NonRootOwner);
+        }
+
+        std::error_code ec;
+        std::filesystem::remove_all(testDir, ec);
+    }
+
+    void testValidateExecutableTopologyRejectsWritableGrandparent() {
+        const std::filesystem::path selfPath = currentExePath();
+        QVERIFY(!selfPath.empty());
+
+        std::filesystem::path grandparentDir = selfPath.parent_path() / "test_grandparent_dir";
+        std::filesystem::path parentDir = grandparentDir / "parent_dir";
+        std::filesystem::create_directories(parentDir);
+
+        std::filesystem::path mockSelf = parentDir / "test_ipc_server";
+        FILE* fSelf = fopen(mockSelf.c_str(), "w");
+        QVERIFY(fSelf != nullptr);
+        fclose(fSelf);
+
+        std::filesystem::path mockParent = parentDir / "qtranscribe";
+        FILE* fParent = fopen(mockParent.c_str(), "w");
+        QVERIFY(fParent != nullptr);
+        fclose(fParent);
+
+        // Make grandparent directory world-writable
+        QCOMPARE(::chmod(grandparentDir.c_str(), 0777), 0);
+
+        keyinjectord::AuthResult res = keyinjectord::AuthResult::Success;
+        bool ok = keyinjectord::validateExecutableTopology(mockParent, mockSelf, &res, /*allowDevMode=*/true);
+        QVERIFY(!ok);
+        QCOMPARE(res, keyinjectord::AuthResult::WorldWritable);
+
+        // Reset grandparent and make it group-writable
+        QCOMPARE(::chmod(grandparentDir.c_str(), 0775), 0);
+        res = keyinjectord::AuthResult::Success;
+        ok = keyinjectord::validateExecutableTopology(mockParent, mockSelf, &res, /*allowDevMode=*/true,
+                                                      /*outParentStat=*/nullptr, /*rejectGroupWritable=*/true);
+        QVERIFY(!ok);
+        QCOMPARE(res, keyinjectord::AuthResult::GroupWritable);
+
+        std::error_code ec;
+        std::filesystem::remove_all(grandparentDir, ec);
+    }
+
+    void testValidateDirectoryAncestryDirect() {
+        const std::filesystem::path selfPath = currentExePath();
+        QVERIFY(!selfPath.empty());
+
+        keyinjectord::AuthResult res = keyinjectord::AuthResult::InvalidFd;
+        struct stat leafStat {};
+        bool ok = keyinjectord::validateDirectoryAncestry(selfPath, &res, /*allowDevMode=*/true, &leafStat);
+        QVERIFY(ok);
+        QCOMPARE(res, keyinjectord::AuthResult::Success);
+        QVERIFY(S_ISREG(leafStat.st_mode));
+        QVERIFY(leafStat.st_nlink > 0);
+
+        // Untrusted prefix rejection
+        res = keyinjectord::AuthResult::Success;
+        QVERIFY(!keyinjectord::validateDirectoryAncestry("/tmp", &res, /*allowDevMode=*/true));
+        QCOMPARE(res, keyinjectord::AuthResult::UntrustedLocation);
+
+        // Nonexistent path
+        res = keyinjectord::AuthResult::Success;
+        QVERIFY(!keyinjectord::validateDirectoryAncestry("/nonexistent_path_xyz_123", &res, /*allowDevMode=*/true));
+        QCOMPARE(res, keyinjectord::AuthResult::StatFailed);
+    }
+
     void testAuthResultToString() {
         QCOMPARE(QString(keyinjectord::authResultToString(keyinjectord::AuthResult::Success)), QString("Success"));
         QCOMPARE(QString(keyinjectord::authResultToString(keyinjectord::AuthResult::WorldWritable)),
-                 QString("Parent executable or directory is world-writable"));
+                 QString("Parent executable or ancestor directory is world-writable"));
         QCOMPARE(QString(keyinjectord::authResultToString(keyinjectord::AuthResult::GroupWritable)),
-                 QString("Parent executable or directory is group-writable"));
+                 QString("Parent executable or ancestor directory is group-writable"));
         QCOMPARE(QString(keyinjectord::authResultToString(keyinjectord::AuthResult::NonRootOwner)),
                  QString("Production helper executable, parent binary, or directory is not owned by root (UID 0)"));
+        QCOMPARE(QString(keyinjectord::authResultToString(keyinjectord::AuthResult::InodeMismatch)),
+                 QString("Process executable inode does not match filesystem path inode"));
     }
 };
 

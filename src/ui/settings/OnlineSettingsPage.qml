@@ -13,18 +13,6 @@ Item {
 
     property int activeSubTab: 0
 
-    Component.onCompleted: {
-        if (visible) {
-            GroqApiClient.loadApiKey();
-        }
-    }
-
-    onVisibleChanged: {
-        if (visible) {
-            GroqApiClient.loadApiKey();
-        }
-    }
-
     ListModel {
         id: whisperModelsModel
         ListElement {

@@ -13,18 +13,6 @@ Item {
     implicitWidth: 620
     implicitHeight: 540
 
-    Component.onCompleted: {
-        if (visible) {
-            GroqApiClient.loadApiKey();
-        }
-    }
-
-    onVisibleChanged: {
-        if (visible) {
-            GroqApiClient.loadApiKey();
-        }
-    }
-
     ScrollView {
         id: usageScrollView
         anchors.fill: parent

@@ -33,6 +33,9 @@ qt_add_qml_module(qtranscribe_ui
     QML_FILES
         Main.qml
         SpeechPanel.qml
+        SystemDiagnosticsColumn.qml
+        RecordingControl.qml
+        SystemStatusFooter.qml
         HistoryView.qml
         UsageView.qml
         CreditsView.qml

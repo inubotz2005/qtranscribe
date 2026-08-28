@@ -11,7 +11,6 @@ public:
 
     WavDecoder() = delete;
 
-    [[nodiscard]] static bool decode(const QByteArray& wavData,
-                                     std::vector<float>& outPcmf32,
+    [[nodiscard]] static bool decode(const QByteArray& wavData, std::vector<float>& outPcmf32,
                                      uint32_t targetSampleRate = DefaultTargetSampleRate);
 };

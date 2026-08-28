@@ -1,3 +1,7 @@
+#include "keyinjectord/FsSecurityChecker.h"
+#include "keyinjectord/KeyboardMacroInjector.h"
+#include "keyinjectord/ProcfsUtils.h"
+#include "keyinjectord/SocketCredentials.h"
 #include "keyinjectord/device_interface.h"
 #include "keyinjectord/ipc_server.h"
 #include "keyinjectord/launcher_auth.h"
@@ -14,6 +18,7 @@
 #include <thread>
 #include <vector>
 
+#include <linux/input-event-codes.h>
 #include <sys/socket.h>
 #include <sys/stat.h>
 #include <unistd.h>
@@ -28,6 +33,23 @@ public:
     }
 
     std::atomic<int> ctrlVCalledCount {0};
+};
+
+struct RecordedRawEvent {
+    int type = 0;
+    int code = 0;
+    int value = 0;
+};
+
+class MockRawDevice : public keyinjectord::IRawDevice {
+public:
+    bool emitEvent(int type, int code, int value) override {
+        events.push_back({type, code, value});
+        return !shouldFail;
+    }
+
+    std::vector<RecordedRawEvent> events;
+    bool shouldFail = false;
 };
 
 struct ServerRunner {
@@ -458,6 +480,141 @@ private slots:
                  QString("Production helper executable, parent binary, or directory is not owned by root (UID 0)"));
         QCOMPARE(QString(keyinjectord::authResultToString(keyinjectord::AuthResult::InodeMismatch)),
                  QString("Process executable inode does not match filesystem path inode"));
+    }
+
+    void testHandleOpcodeIsolated() {
+        int sv[2];
+        QCOMPARE(::socketpair(AF_UNIX, SOCK_STREAM | SOCK_CLOEXEC, 0, sv), 0);
+
+        MockDevice mockDevice;
+        keyinjectord::IpcServer server(sv[0], mockDevice);
+
+        QCOMPARE(server.handleOpcode(keyinjectord::Opcode::Paste), keyinjectord::ResponseStatus::Ok);
+        QCOMPARE(mockDevice.ctrlVCalledCount.load(), 1);
+
+        QCOMPARE(server.handleOpcode(keyinjectord::Opcode::Ping), keyinjectord::ResponseStatus::Ok);
+        QCOMPARE(mockDevice.ctrlVCalledCount.load(), 1);
+
+        QCOMPARE(server.handleOpcode(static_cast<keyinjectord::Opcode>(0xFE)),
+                 keyinjectord::ResponseStatus::UnknownCmd);
+
+        class FailingDevice : public keyinjectord::IDevice {
+        public:
+            bool sendCtrlV() override { return false; }
+        } failingDevice;
+
+        keyinjectord::IpcServer failingServer(sv[1], failingDevice);
+        QCOMPARE(failingServer.handleOpcode(keyinjectord::Opcode::Paste),
+                 keyinjectord::ResponseStatus::DeviceError);
+
+        server.stop();
+        failingServer.stop();
+    }
+
+    void testKeyboardMacroInjectorSequence() {
+        MockRawDevice mockRaw;
+        keyinjectord::KeyboardMacroInjector injector(mockRaw, 0ms);
+
+        QVERIFY(injector.sendCtrlV());
+
+        // Expected 8 events:
+        // 0: KEY_LEFTCTRL (1), 1: SYN_REPORT (0)
+        // 2: KEY_V (1), 3: SYN_REPORT (0)
+        // 4: KEY_V (0), 5: SYN_REPORT (0)
+        // 6: KEY_LEFTCTRL (0), 7: SYN_REPORT (0)
+        QCOMPARE(mockRaw.events.size(), 8);
+
+        QCOMPARE(mockRaw.events[0].type, EV_KEY);
+        QCOMPARE(mockRaw.events[0].code, KEY_LEFTCTRL);
+        QCOMPARE(mockRaw.events[0].value, 1);
+
+        QCOMPARE(mockRaw.events[1].type, EV_SYN);
+        QCOMPARE(mockRaw.events[1].code, SYN_REPORT);
+        QCOMPARE(mockRaw.events[1].value, 0);
+
+        QCOMPARE(mockRaw.events[2].type, EV_KEY);
+        QCOMPARE(mockRaw.events[2].code, KEY_V);
+        QCOMPARE(mockRaw.events[2].value, 1);
+
+        QCOMPARE(mockRaw.events[3].type, EV_SYN);
+        QCOMPARE(mockRaw.events[3].code, SYN_REPORT);
+        QCOMPARE(mockRaw.events[3].value, 0);
+
+        QCOMPARE(mockRaw.events[4].type, EV_KEY);
+        QCOMPARE(mockRaw.events[4].code, KEY_V);
+        QCOMPARE(mockRaw.events[4].value, 0);
+
+        QCOMPARE(mockRaw.events[5].type, EV_SYN);
+        QCOMPARE(mockRaw.events[5].code, SYN_REPORT);
+        QCOMPARE(mockRaw.events[5].value, 0);
+
+        QCOMPARE(mockRaw.events[6].type, EV_KEY);
+        QCOMPARE(mockRaw.events[6].code, KEY_LEFTCTRL);
+        QCOMPARE(mockRaw.events[6].value, 0);
+
+        QCOMPARE(mockRaw.events[7].type, EV_SYN);
+        QCOMPARE(mockRaw.events[7].code, SYN_REPORT);
+        QCOMPARE(mockRaw.events[7].value, 0);
+    }
+
+    void testKeyboardMacroInjectorFailure() {
+        MockRawDevice mockRaw;
+        mockRaw.shouldFail = true;
+        keyinjectord::KeyboardMacroInjector injector(mockRaw, 0ms);
+
+        QVERIFY(!injector.sendCtrlV());
+    }
+
+    void testSocketCredentialsVerification() {
+        int sv[2];
+        QCOMPARE(::socketpair(AF_UNIX, SOCK_STREAM | SOCK_CLOEXEC, 0, sv), 0);
+
+        struct ucred creds {};
+        keyinjectord::AuthResult res = keyinjectord::AuthResult::InvalidFd;
+        bool ok = keyinjectord::SocketCredentials::verifySocketAndGetPeer(sv[0], creds, &res);
+        QVERIFY(ok);
+        QCOMPARE(res, keyinjectord::AuthResult::Success);
+        QCOMPARE(creds.uid, ::getuid());
+
+        res = keyinjectord::AuthResult::InvalidFd;
+        QVERIFY(keyinjectord::SocketCredentials::validatePeerIdentity(creds, &res));
+        QCOMPARE(res, keyinjectord::AuthResult::Success);
+
+        // Test invalid fd
+        res = keyinjectord::AuthResult::Success;
+        QVERIFY(!keyinjectord::SocketCredentials::verifySocketAndGetPeer(-1, creds, &res));
+        QCOMPARE(res, keyinjectord::AuthResult::InvalidFd);
+
+        ::close(sv[0]);
+        ::close(sv[1]);
+    }
+
+    void testProcfsUtilsSelfExe() {
+        keyinjectord::AuthResult res = keyinjectord::AuthResult::InvalidFd;
+        std::filesystem::path selfPath;
+        QVERIFY(keyinjectord::ProcfsUtils::readSelfExePath(selfPath, &res));
+        QCOMPARE(res, keyinjectord::AuthResult::Success);
+        QVERIFY(!selfPath.empty());
+
+        struct stat st {};
+        int fd = keyinjectord::ProcfsUtils::openSelfExeFd(&st, &res);
+        QVERIFY(fd >= 0);
+        QCOMPARE(res, keyinjectord::AuthResult::Success);
+        QVERIFY(S_ISREG(st.st_mode));
+        ::close(fd);
+    }
+
+    void testFsSecurityCheckerUntrustedPath() {
+        QVERIFY(keyinjectord::FsSecurityChecker::isUntrustedPath("/tmp"));
+        QVERIFY(keyinjectord::FsSecurityChecker::isUntrustedPath("/tmp/foo"));
+        QVERIFY(keyinjectord::FsSecurityChecker::isUntrustedPath("/var/tmp"));
+        QVERIFY(keyinjectord::FsSecurityChecker::isUntrustedPath("/var/tmp/nested/binary"));
+        QVERIFY(keyinjectord::FsSecurityChecker::isUntrustedPath("/dev/shm"));
+        QVERIFY(keyinjectord::FsSecurityChecker::isUntrustedPath("/dev/shm/test"));
+        QVERIFY(keyinjectord::FsSecurityChecker::isUntrustedPath("/run/user/1000/qtranscribe"));
+
+        QVERIFY(!keyinjectord::FsSecurityChecker::isUntrustedPath("/usr/bin/qtranscribe"));
+        QVERIFY(!keyinjectord::FsSecurityChecker::isUntrustedPath("/opt/qtranscribe"));
     }
 };
 

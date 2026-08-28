@@ -117,6 +117,24 @@ void IpcServer::run() {
     }
 }
 
+ResponseStatus IpcServer::handleOpcode(Opcode op) {
+    switch (op) {
+        case Opcode::Paste:
+            KEYINJECTORD_LOG_DEBUG("IPC Received command: Paste (0x%02X)", static_cast<uint8_t>(op));
+            if (m_device.sendCtrlV()) {
+                return ResponseStatus::Ok;
+            }
+            KEYINJECTORD_LOG_ERROR("Device sendCtrlV() failed");
+            return ResponseStatus::DeviceError;
+        case Opcode::Ping:
+            KEYINJECTORD_LOG_DEBUG("IPC Received command: Ping (0x%02X)", static_cast<uint8_t>(op));
+            return ResponseStatus::Ok;
+        default:
+            KEYINJECTORD_LOG_ERROR("Unknown IPC opcode: 0x%02X from fd=%d", static_cast<uint8_t>(op), m_socketFd);
+            return ResponseStatus::UnknownCmd;
+    }
+}
+
 bool IpcServer::handleClientRead() {
     std::array<uint8_t, kMaxBufferSize> buf {};
 
@@ -131,34 +149,12 @@ bool IpcServer::handleClientRead() {
     }
 
     for (uint8_t opcodeRaw : std::span(buf.data(), static_cast<size_t>(n))) {
-        ResponseStatus status;
-        bool shouldDisconnect = false;
-
-        switch (static_cast<Opcode>(opcodeRaw)) {
-            case Opcode::Paste:
-                KEYINJECTORD_LOG_DEBUG("IPC Received command: Paste (0x%02X)", opcodeRaw);
-                if (m_device.sendCtrlV()) {
-                    status = ResponseStatus::Ok;
-                } else {
-                    KEYINJECTORD_LOG_ERROR("Device sendCtrlV() failed");
-                    status = ResponseStatus::DeviceError;
-                }
-                break;
-            case Opcode::Ping:
-                KEYINJECTORD_LOG_DEBUG("IPC Received command: Ping (0x%02X)", opcodeRaw);
-                status = ResponseStatus::Ok;
-                break;
-            default:
-                KEYINJECTORD_LOG_ERROR("Unknown IPC opcode: 0x%02X from fd=%d", opcodeRaw, m_socketFd);
-                status = ResponseStatus::UnknownCmd;
-                shouldDisconnect = true;
-                break;
-        }
+        ResponseStatus status = handleOpcode(static_cast<Opcode>(opcodeRaw));
 
         uint8_t respByte = static_cast<uint8_t>(status);
         [[maybe_unused]] auto w = write(m_socketFd, &respByte, sizeof(respByte));
 
-        if (shouldDisconnect) {
+        if (status == ResponseStatus::UnknownCmd) {
             return false;
         }
     }

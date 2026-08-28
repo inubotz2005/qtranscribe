@@ -103,7 +103,11 @@ pkg_check_modules(LIBCAP REQUIRED IMPORTED_TARGET libcap)
 qt_add_executable(test_ipc_server
     test_ipc_server.cpp
     ${CMAKE_SOURCE_DIR}/src/keyinjectord/ipc_server.cpp
+    ${CMAKE_SOURCE_DIR}/src/keyinjectord/KeyboardMacroInjector.cpp
     ${CMAKE_SOURCE_DIR}/src/keyinjectord/launcher_auth.cpp
+    ${CMAKE_SOURCE_DIR}/src/keyinjectord/SocketCredentials.cpp
+    ${CMAKE_SOURCE_DIR}/src/keyinjectord/ProcfsUtils.cpp
+    ${CMAKE_SOURCE_DIR}/src/keyinjectord/FsSecurityChecker.cpp
 )
 
 target_link_libraries(test_ipc_server

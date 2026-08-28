@@ -23,6 +23,8 @@ public:
     void run();
     void stop();
 
+    ResponseStatus handleOpcode(Opcode op);
+
 private:
     bool handleClientRead();
 

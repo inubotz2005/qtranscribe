@@ -22,9 +22,17 @@ add_executable(keyinjectord
     main.cpp
     capability.cpp
     uinput_device.cpp
+    KeyboardMacroInjector.cpp
     ipc_server.cpp
     launcher_auth.cpp
+    SocketCredentials.cpp
+    ProcfsUtils.cpp
+    FsSecurityChecker.cpp
     launcher_auth.h
+    SocketCredentials.h
+    ProcfsUtils.h
+    FsSecurityChecker.h
+    KeyboardMacroInjector.h
     device_interface.h
     logging.h
     protocol.h

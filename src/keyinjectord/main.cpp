@@ -3,6 +3,7 @@
 #include "logging.h"
 #include "uinput_device.h"
 
+#include "KeyboardMacroInjector.h"
 #include "launcher_auth.h"
 
 #include <cerrno>
@@ -115,9 +116,10 @@ int main(int argc, char* argv[]) {
     }
 
     try {
-        keyinjectord::UinputDevice device(uinputFd, delayMs);
+        keyinjectord::UinputDevice device(uinputFd);
+        keyinjectord::KeyboardMacroInjector injector(device, std::chrono::milliseconds(delayMs));
 
-        keyinjectord::IpcServer server(socketFd, device);
+        keyinjectord::IpcServer server(socketFd, injector);
 
         server.run();
 

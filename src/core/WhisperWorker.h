@@ -15,9 +15,6 @@ class WhisperWorker : public QObject {
 public:
     explicit WhisperWorker(QObject* parent = nullptr);
     ~WhisperWorker() override;
-
-    static bool extractPcmSamples(const QByteArray& wavData, std::vector<float>& outPcmf32);
-
     void cancel(uint64_t requestId = 0);
     void cancelLoad(uint64_t loadRequestId = 0);
     void resetAbort();

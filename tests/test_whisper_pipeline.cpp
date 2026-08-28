@@ -8,6 +8,7 @@
 #include <QTemporaryDir>
 #include <QTest>
 
+#include "WavDecoder.h"
 #include "WhisperModelManager.h"
 #include "WhisperSttClient.h"
 #include "WhisperWorker.h"
@@ -69,7 +70,7 @@ private slots:
 
         const QByteArray wav = createWav(sampleRate, 1, 32, 3, pcm);
         std::vector<float> pcmf32;
-        const bool success = WhisperWorker::extractPcmSamples(wav, pcmf32);
+        const bool success = WavDecoder::decode(wav, pcmf32);
 
         QVERIFY(success);
         QVERIFY(std::abs(static_cast<int>(pcmf32.size()) - 16000) <= 5);
@@ -94,7 +95,7 @@ private slots:
 
         const QByteArray wav = createWav(sampleRate, 2, 16, 1, pcm);
         std::vector<float> pcmf32;
-        const bool success = WhisperWorker::extractPcmSamples(wav, pcmf32);
+        const bool success = WavDecoder::decode(wav, pcmf32);
 
         QVERIFY(success);
         QVERIFY(std::abs(static_cast<int>(pcmf32.size()) - 16000) <= 10);
@@ -117,7 +118,7 @@ private slots:
 
         const QByteArray wav = createWav(sampleRate, 1, 32, 1, pcm);
         std::vector<float> pcmf32;
-        const bool success = WhisperWorker::extractPcmSamples(wav, pcmf32);
+        const bool success = WavDecoder::decode(wav, pcmf32);
 
         QVERIFY(success);
         QVERIFY(std::abs(static_cast<int>(pcmf32.size()) - 16000) <= 5);
@@ -136,10 +137,63 @@ private slots:
 
         const QByteArray wav = createWav(sampleRate, 1, 16, 1, pcm);
         std::vector<float> pcmf32;
-        const bool success = WhisperWorker::extractPcmSamples(wav, pcmf32);
+        const bool success = WavDecoder::decode(wav, pcmf32);
 
         QVERIFY(success);
         QCOMPARE(static_cast<int>(pcmf32.size()), 16000);
+    }
+
+    void testAudioResampling_8BitUnsignedTo16kMono() {
+        constexpr int sampleRate = 22050;
+        constexpr int frameCount = 22050;
+        QByteArray pcm;
+        pcm.resize(frameCount);
+        auto* u8Ptr = reinterpret_cast<uint8_t*>(pcm.data());
+
+        for (int i = 0; i < frameCount; ++i) {
+            const float sineVal = std::sin(2.0f * std::numbers::pi_v<float> * 440.0f * i / sampleRate);
+            u8Ptr[i] = static_cast<uint8_t>(std::clamp(128.0f + 100.0f * sineVal, 0.0f, 255.0f));
+        }
+
+        const QByteArray wav = createWav(sampleRate, 1, 8, 1, pcm);
+        std::vector<float> pcmf32;
+        const bool success = WavDecoder::decode(wav, pcmf32);
+
+        QVERIFY(success);
+        QVERIFY(std::abs(static_cast<int>(pcmf32.size()) - 16000) <= 10);
+        for (float s : pcmf32) {
+            QVERIFY(s >= -1.05f && s <= 1.05f);
+        }
+    }
+
+    void testWavDecoder_CustomTargetSampleRate() {
+        constexpr int sampleRate = 48000;
+        constexpr int frameCount = 48000;
+        QByteArray pcm;
+        pcm.resize(frameCount * sizeof(int16_t));
+        auto* shortPtr = reinterpret_cast<int16_t*>(pcm.data());
+
+        for (int i = 0; i < frameCount; ++i) {
+            shortPtr[i] = static_cast<int16_t>(16000.0f * std::sin(2.0f * std::numbers::pi_v<float> * 440.0f * i / sampleRate));
+        }
+
+        const QByteArray wav = createWav(sampleRate, 1, 16, 1, pcm);
+        std::vector<float> pcmf32;
+        const bool success = WavDecoder::decode(wav, pcmf32, 24000);
+
+        QVERIFY(success);
+        QVERIFY(std::abs(static_cast<int>(pcmf32.size()) - 24000) <= 5);
+    }
+
+    void testWavDecoder_InvalidAndTruncated() {
+        std::vector<float> pcmf32;
+
+        QVERIFY(!WavDecoder::decode(QByteArray(), pcmf32));
+        QVERIFY(!WavDecoder::decode(QByteArray("RIFF1234"), pcmf32));
+        QVERIFY(!WavDecoder::decode(QByteArray("NOT_A_WAV_HEADER_DATA_STREAM"), pcmf32));
+
+        const QByteArray validHeaderWav = createWav(16000, 1, 16, 1, QByteArray(320, 0));
+        QVERIFY(!WavDecoder::decode(validHeaderWav, pcmf32, 0));
     }
 
     void testModelSelectionSynchronization() {

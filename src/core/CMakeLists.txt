@@ -23,6 +23,8 @@ add_library(qtranscribe_core STATIC
     HttpRequestRunner.cpp
     GroqSttClient.h
     GroqSttClient.cpp
+    WavDecoder.h
+    WavDecoder.cpp
     WhisperWorker.h
     WhisperWorker.cpp
     WhisperSttClient.h

@@ -18,6 +18,8 @@ qt_add_qml_module(qtranscribe_ui
         ${CMAKE_SOURCE_DIR}/src/core/AbstractSttClient.h
         ${CMAKE_SOURCE_DIR}/src/core/GroqSttClient.h
         ${CMAKE_SOURCE_DIR}/src/core/WhisperSttClient.h
+        ${CMAKE_SOURCE_DIR}/src/core/WhisperModelCatalog.h
+        ${CMAKE_SOURCE_DIR}/src/core/ModelDownloader.h
         ${CMAKE_SOURCE_DIR}/src/core/WhisperModelStorage.h
         ${CMAKE_SOURCE_DIR}/src/core/WhisperModelManager.h
         ${CMAKE_SOURCE_DIR}/src/core/GroqLlmClient.h

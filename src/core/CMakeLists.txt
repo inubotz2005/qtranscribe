@@ -23,6 +23,10 @@ add_library(qtranscribe_core STATIC
     WhisperWorker.cpp
     WhisperSttClient.h
     WhisperSttClient.cpp
+    WhisperModelCatalog.h
+    WhisperModelCatalog.cpp
+    ModelDownloader.h
+    ModelDownloader.cpp
     WhisperModelStorage.h
     WhisperModelStorage.cpp
     WhisperModelManager.h

@@ -1,43 +1,21 @@
 #pragma once
 
-#include <QElapsedTimer>
+#include "ModelDownloader.h"
+#include "WhisperModelCatalog.h"
+
 #include <QList>
-#include <QNetworkAccessManager>
 #include <QObject>
-#include <QPointer>
 #include <QString>
 
 #include <memory>
 #include <optional>
-
-class QFile;
-class QNetworkReply;
-
-struct WhisperModelItem {
-    QString id = {};
-    QString name = {};
-    QString fileName = {};
-    QString downloadUrl = {};
-    qint64 sizeBytes = 0;
-    QString sizeFormatted = {};
-    QString memoryFormatted = {};
-    QString description = {};
-    bool isInstalled = false;
-    qint64 installedSizeBytes = 0;
-    QString installedSizeFormatted = {};
-
-    bool isDownloading = false;
-    qreal progress = 0.0;
-    qint64 bytesReceived = 0;
-    qint64 totalBytes = 0;
-    QString speedFormatted = {};
-};
 
 class WhisperModelStorage : public QObject {
     Q_OBJECT
 
 public:
     explicit WhisperModelStorage(QObject* parent = nullptr);
+    explicit WhisperModelStorage(std::unique_ptr<ModelDownloader> downloader, QObject* parent = nullptr);
     ~WhisperModelStorage() override;
 
     QString modelsDirectory() const;
@@ -82,30 +60,14 @@ signals:
     void diskSpaceChanged(qint64 availableBytes);
     void lastErrorChanged(const QString& error);
 
-private slots:
-    void onDownloadReadyRead();
-    void onDownloadProgress(qint64 bytesReceived, qint64 bytesTotal);
-    void onDownloadFinished();
-
 private:
-    void initPresets();
+    void setupDownloaderConnections();
     void setLastError(const QString& error);
 
+    WhisperModelCatalog m_catalog;
+    std::unique_ptr<ModelDownloader> m_downloader;
     QString m_customModelsDirectory;
     QList<WhisperModelItem> m_models;
     QString m_lastError;
     qint64 m_availableDiskSpace = 0;
-
-    QNetworkAccessManager m_nam;
-    QPointer<QNetworkReply> m_currentReply;
-    std::unique_ptr<QFile> m_partFile;
-    QString m_downloadingModelId;
-    QString m_downloadAbortReason;
-    qreal m_currentProgress = 0.0;
-    qint64 m_currentBytesReceived = 0;
-    qint64 m_currentTotalBytes = 0;
-    QString m_currentSpeedFormatted;
-    QElapsedTimer m_downloadTimer;
-    qint64 m_lastSpeedBytes = 0;
-    qint64 m_lastSpeedTimeMs = 0;
 };

@@ -1,3 +1,5 @@
+#include "ModelDownloader.h"
+#include "WhisperModelCatalog.h"
 #include "WhisperModelStorage.h"
 
 #include <QFile>
@@ -11,6 +13,56 @@ class WhisperStorageTest : public QObject {
     Q_OBJECT
 
 private slots:
+    void testCatalogStandalone() {
+        WhisperModelCatalog catalog;
+        QCOMPARE(catalog.modelCount(), 10);
+        QCOMPARE(catalog.presets().size(), 10);
+
+        for (const auto& item : catalog.presets()) {
+            QVERIFY(!item.id.isEmpty());
+            QVERIFY(!item.name.isEmpty());
+            QVERIFY(!item.fileName.isEmpty());
+            QVERIFY(item.fileName.endsWith(u".bin"_s));
+            QVERIFY(item.downloadUrl.startsWith(u"https://huggingface.co/"_s));
+            QVERIFY(item.sizeBytes > 0);
+            QVERIFY(!item.sizeFormatted.isEmpty());
+            QVERIFY(!item.memoryFormatted.isEmpty());
+            QVERIFY(!item.description.isEmpty());
+        }
+
+        const int tinyIdx = catalog.findModelIndex(u"tiny.en"_s);
+        QVERIFY(tinyIdx >= 0);
+
+        const auto modelOpt = catalog.model(u"tiny.en"_s);
+        QVERIFY(modelOpt.has_value());
+        QCOMPARE(modelOpt->id, u"tiny.en"_s);
+        QCOMPARE(modelOpt->fileName, u"ggml-tiny.en.bin"_s);
+
+        const auto invalidOpt = catalog.model(u"non_existent_model"_s);
+        QVERIFY(!invalidOpt.has_value());
+        QCOMPARE(catalog.findModelIndex(u"non_existent_model"_s), -1);
+    }
+
+    void testModelDownloaderBasics() {
+        ModelDownloader downloader;
+        QVERIFY(!downloader.isDownloadingAny());
+        QVERIFY(downloader.downloadingModelId().isEmpty());
+        QCOMPARE(downloader.downloadProgress(), 0.0);
+        QCOMPARE(downloader.downloadBytesReceived(), 0);
+        QCOMPARE(downloader.downloadTotalBytes(), 0);
+        QVERIFY(downloader.downloadSpeedFormatted().isEmpty());
+        QVERIFY(downloader.downloadBytesFormatted().isEmpty());
+
+        downloader.cancelDownload(u"non_existent"_s);
+        QVERIFY(!downloader.isDownloadingAny());
+
+        QCOMPARE(ModelDownloader::formatBytes(0), u"0 B"_s);
+        QCOMPARE(ModelDownloader::formatBytes(512), u"512 B"_s);
+        QCOMPARE(ModelDownloader::formatBytes(1024), u"1.0 KiB"_s);
+        QCOMPARE(ModelDownloader::formatBytes(1024 * 1024), u"1.0 MiB"_s);
+        QCOMPARE(ModelDownloader::formatBytes(1024LL * 1024LL * 1024LL), u"1.00 GiB"_s);
+    }
+
     void testPresetsCountAndMetadata() {
         WhisperModelStorage storage;
         QCOMPARE(storage.modelCount(), 10);

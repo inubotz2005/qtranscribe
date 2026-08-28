@@ -11,6 +11,10 @@ add_library(qtranscribe_core STATIC
     DictationPadModel.cpp
     GlobalShortcutManager.h
     GlobalShortcutManager.cpp
+    ApiKeyStore.h
+    ApiKeyStore.cpp
+    PresetProvider.h
+    PresetProvider.cpp
     GroqApiClient.h
     GroqApiClient.cpp
     GroqResponseParser.h

@@ -3,6 +3,8 @@
 #include "GroqApiClient.h"
 #include "LoggingCategories.h"
 
+#include "PresetProvider.h"
+
 #include <QJsonArray>
 #include <QJsonDocument>
 #include <QJsonObject>
@@ -149,23 +151,11 @@ QString GroqLlmClient::formattedTemperature() const {
 }
 
 QString GroqLlmClient::systemPromptForPreset(const QString& preset) const {
-    if (preset == u"bullets"_s) {
-        return u"You are an expert speech-to-text post-processor. Your task is to organize and format the spoken transcription into clean markdown bullet points or numbered steps if sequential items are dictated. Group related points concisely. Output ONLY the formatted markdown list. Do NOT add any preamble, conversational remarks, or closing commentary."_s;
-    }
-    if (preset == u"professional"_s) {
-        return u"You are an expert executive communication assistant. Your task is to polish the dictated speech into crisp, clear, and professional text suitable for emails, messages, or documents. Remove vocal filler words (e.g., um, uh, like), fix all grammar and punctuation, and enhance flow while preserving the core message. Output ONLY the polished text with NO preamble, quotes, or conversational commentary."_s;
-    }
-    if (preset == u"custom"_s) {
-        if (!m_customPrompt.trimmed().isEmpty()) {
-            return m_customPrompt;
-        }
-        return u"You are a helpful speech post-processor. Clean up the transcribed speech while preserving its original meaning. Output ONLY the processed text with no extra conversational commentary."_s;
-    }
-    return u"You are an expert speech-to-text post-processor. Your task is to fix spelling errors, speech recognition typos, homophone mistakes, missing punctuation, and capitalization in the transcribed text while strictly preserving the original meaning, intent, vocabulary, and tone. Output ONLY the corrected text. Do NOT wrap in quotes, do NOT add explanations, do NOT add introductory or concluding remarks."_s;
+    return PresetProvider::systemPromptForPreset(preset, m_customPrompt);
 }
 
 QString GroqLlmClient::currentSystemPrompt() const {
-    return systemPromptForPreset(m_activePreset);
+    return PresetProvider::systemPromptForPreset(m_activePreset, m_customPrompt);
 }
 
 void GroqLlmClient::cancel() {

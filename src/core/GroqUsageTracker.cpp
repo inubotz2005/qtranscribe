@@ -314,31 +314,17 @@ void GroqUsageTracker::refreshQuota() {
     setCheckingQuota(true);
     setQuotaCheckError({});
 
-    // Use a lightweight 1-token chat completion ping to retrieve full RPD and TPM rate limit headers
-    QJsonObject rootObj;
-    rootObj[u"model"_s] = u"openai/gpt-oss-20b"_s;
-    QJsonArray messages;
-    QJsonObject userMsg;
-    userMsg[u"role"_s] = u"user"_s;
-    userMsg[u"content"_s] = u"ping"_s;
-    messages.append(userMsg);
-    rootObj[u"messages"_s] = messages;
-    rootObj[u"max_completion_tokens"_s] = 1;
+    m_apiClient->ping([this](const GroqApiResponse& res) {
+        setCheckingQuota(false);
 
-    qCDebug(lcNetwork) << "Sending Groq quota refresh request via GroqApiClient::postJson";
-
-    m_apiClient->postJson(u"chat/completions"_s, rootObj, u"Quota Check"_s, u"openai/gpt-oss-20b"_s,
-                          [this](const GroqApiResponse& res) {
-                              setCheckingQuota(false);
-
-                              if (!res.isSuccess) {
-                                  qWarning() << "GroqUsageTracker quota refresh error:" << res.errorMessage;
-                                  setQuotaCheckError(res.errorMessage);
-                              } else {
-                                  setQuotaCheckError({});
-                                  qCDebug(lcNetwork) << "Groq quota refresh succeeded in" << res.latencyMs << "ms";
-                              }
-                          });
+        if (!res.isSuccess) {
+            qWarning() << "GroqUsageTracker quota refresh error:" << res.errorMessage;
+            setQuotaCheckError(res.errorMessage);
+        } else {
+            setQuotaCheckError({});
+            qCDebug(lcNetwork) << "Groq quota refresh succeeded in" << res.latencyMs << "ms";
+        }
+    });
 }
 
 void GroqUsageTracker::resetSessionStats() {

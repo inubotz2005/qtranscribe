@@ -42,6 +42,7 @@ void TestApplicationContext::testHeadlessInitialization() {
 
     QVERIFY(context.dictationCoordinator() != nullptr);
     QVERIFY(context.groqApiClient() != nullptr);
+    QVERIFY(context.apiKeyStore() != nullptr);
     QVERIFY(context.groqSttClient() != nullptr);
     QVERIFY(context.whisperSttClient() != nullptr);
     QVERIFY(context.whisperModelManager() != nullptr);

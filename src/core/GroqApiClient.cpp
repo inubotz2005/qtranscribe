@@ -2,13 +2,15 @@
 
 #include "LoggingCategories.h"
 
+#include "ApiKeyStore.h"
+
 #include <QCoreApplication>
 #include <QElapsedTimer>
 #include <QHttpHeaders>
+#include <QJsonArray>
 #include <QJsonDocument>
 #include <QJsonObject>
 #include <QNetworkProxyFactory>
-#include <QSettings>
 #include <QSslConfiguration>
 #include <QSslSocket>
 
@@ -40,6 +42,10 @@ GroqApiClient::GroqApiClient(QObject* parent)
     QHttpHeaders headers;
     headers.append(QHttpHeaders::WellKnownHeader::UserAgent, userAgent());
     m_requestFactory.setCommonHeaders(headers);
+
+    auto* defaultStore = new ApiKeyStore(this);
+    setKeyStore(defaultStore);
+    m_ownsKeyStore = true;
 }
 
 #ifndef QTRANSCRIBE_VERSION
@@ -52,64 +58,76 @@ QString GroqApiClient::userAgent() {
     return u"QTranscribe/%1 (Linux; Qt %2)"_s.arg(appVer, QString::fromUtf8(QT_VERSION_STR));
 }
 
+void GroqApiClient::setKeyStore(ApiKeyStore* keyStore) {
+    if (m_keyStore == keyStore) {
+        return;
+    }
+
+    if (m_keyStore) {
+        disconnect(m_keyStore, &ApiKeyStore::apiKeyChanged, this, nullptr);
+        disconnect(m_keyStore, &ApiKeyStore::apiKeySetChanged, this, nullptr);
+        if (m_ownsKeyStore && m_keyStore->parent() == this) {
+            m_keyStore->deleteLater();
+        }
+    }
+
+    m_keyStore = keyStore;
+    m_ownsKeyStore = false;
+
+    if (m_keyStore) {
+        connect(m_keyStore, &ApiKeyStore::apiKeyChanged, this, [this]() {
+            updateFactoryAuth();
+            emit apiKeyChanged();
+        });
+        connect(m_keyStore, &ApiKeyStore::apiKeySetChanged, this, &GroqApiClient::apiKeySetChanged);
+        updateFactoryAuth();
+    }
+}
+
+ApiKeyStore* GroqApiClient::keyStore() const {
+    return m_keyStore;
+}
+
 QString GroqApiClient::apiKey() const {
-    return m_apiKey;
+    return m_keyStore ? m_keyStore->apiKey() : QString();
 }
 
 void GroqApiClient::setApiKey(const QString& key) {
-    const QString trimmed = key.trimmed();
-    if (m_apiKey != trimmed) {
-        const bool wasSet = apiKeySet();
-        m_apiKey = trimmed;
-        m_apiKeyLoaded = true;
-        updateFactoryAuth();
-        emit apiKeyChanged();
-
-        if (wasSet != apiKeySet()) {
-            emit apiKeySetChanged();
-        }
-
-        if (!m_apiKey.isEmpty()) {
-            saveApiKeyToKeychain(m_apiKey);
-        } else {
-            deleteApiKeyFromKeychain();
-        }
-    }
-}
-
-void GroqApiClient::loadApiKey() {
-    if (m_isLoadingApiKey) {
-        return;
-    }
-    loadApiKeyFromKeychain();
-}
-
-void GroqApiClient::ensureApiKeyLoaded() {
-    if (m_apiKeyLoaded || m_isLoadingApiKey) {
-        return;
-    }
-    loadApiKey();
-}
-
-void GroqApiClient::setStorageKeys(const QString& keychainService, const QString& keychainKey,
-                                   const QString& settingsKey) {
-    m_keychainService = keychainService;
-    m_keychainKey = keychainKey;
-    if (!settingsKey.isEmpty()) {
-        m_settingsKey = settingsKey;
-    }
-}
-
-void GroqApiClient::updateFactoryAuth() {
-    if (!m_apiKey.isEmpty()) {
-        m_requestFactory.setBearerToken(m_apiKey.toUtf8());
-    } else {
-        m_requestFactory.setBearerToken(QByteArray());
+    if (m_keyStore) {
+        m_keyStore->setApiKey(key);
     }
 }
 
 bool GroqApiClient::apiKeySet() const {
-    return !m_apiKey.isEmpty();
+    return m_keyStore ? m_keyStore->apiKeySet() : false;
+}
+
+void GroqApiClient::loadApiKey() {
+    if (m_keyStore) {
+        m_keyStore->loadApiKey();
+    }
+}
+
+void GroqApiClient::ensureApiKeyLoaded() {
+    if (m_keyStore) {
+        m_keyStore->ensureApiKeyLoaded();
+    }
+}
+
+void GroqApiClient::setStorageKeys(const QString& keychainService, const QString& keychainKey,
+                                   const QString& settingsKey) {
+    if (m_keyStore) {
+        m_keyStore->setStorageKeys(keychainService, keychainKey, settingsKey);
+    }
+}
+
+void GroqApiClient::updateFactoryAuth() {
+    const QString key = apiKey();
+    if (!key.isEmpty()) {
+        m_requestFactory.setBearerToken(key.toUtf8());
+    } else {
+        m_requestFactory.setBearerToken(QByteArray());
+    }
 }
 
 QNetworkAccessManager* GroqApiClient::networkAccessManager() {
@@ -185,91 +203,16 @@ QNetworkReply* GroqApiClient::postMultipart(const QString& relativePath, QHttpMu
     return reply;
 }
 
-void GroqApiClient::loadApiKeyFromKeychain() {
-    m_isLoadingApiKey = true;
-    auto* readJob = new QKeychain::ReadPasswordJob(m_keychainService, this);
-    readJob->setKey(m_keychainKey);
-    readJob->setAutoDelete(true);
+QNetworkReply* GroqApiClient::ping(ResponseCallback callback) {
+    QJsonObject rootObj;
+    rootObj[u"model"_s] = u"openai/gpt-oss-20b"_s;
+    QJsonArray messages;
+    QJsonObject userMsg;
+    userMsg[u"role"_s] = u"user"_s;
+    userMsg[u"content"_s] = u"ping"_s;
+    messages.append(userMsg);
+    rootObj[u"messages"_s] = messages;
+    rootObj[u"max_completion_tokens"_s] = 1;
 
-    connect(readJob, &QKeychain::ReadPasswordJob::finished, this, [this](QKeychain::Job* job) {
-        m_isLoadingApiKey = false;
-        m_apiKeyLoaded = true;
-        auto* rJob = static_cast<QKeychain::ReadPasswordJob*>(job);
-        if (!rJob->error()) {
-            const QString key = rJob->textData().trimmed();
-            if (!key.isEmpty()) {
-                qCDebug(lcNetwork) << "Groq API key loaded successfully from system keychain (key length:" << key.size()
-                                   << ")";
-                m_apiKey = key;
-                updateFactoryAuth();
-                emit apiKeyChanged();
-                emit apiKeySetChanged();
-                return;
-            }
-        } else if (rJob->error() == QKeychain::EntryNotFound) {
-            qCDebug(lcNetwork) << "No Groq API key found in system keychain, checking QSettings fallback";
-        } else {
-            qWarning("GroqApiClient: Failed to read API key from keychain (%s), checking QSettings fallback",
-                     qPrintable(rJob->errorString()));
-        }
-
-        loadApiKeyFromSettingsFallback();
-    });
-
-    readJob->start();
-}
-
-void GroqApiClient::loadApiKeyFromSettingsFallback() {
-    QSettings settings;
-    const QString key = settings.value(m_settingsKey).toString().trimmed();
-    if (!key.isEmpty()) {
-        qCDebug(lcNetwork) << "Groq API key loaded from QSettings fallback (key length:" << key.size() << ")";
-        m_apiKey = key;
-        updateFactoryAuth();
-        emit apiKeyChanged();
-        emit apiKeySetChanged();
-    } else {
-        qCDebug(lcNetwork) << "No Groq API key found in QSettings fallback";
-    }
-}
-
-void GroqApiClient::saveApiKeyToKeychain(const QString& key) {
-    auto* writeJob = new QKeychain::WritePasswordJob(m_keychainService, this);
-    writeJob->setKey(m_keychainKey);
-    writeJob->setTextData(key);
-    writeJob->setAutoDelete(true);
-
-    connect(writeJob, &QKeychain::WritePasswordJob::finished, this, [this, key](QKeychain::Job* job) {
-        if (job->error()) {
-            qWarning("GroqApiClient: Failed to save API key to keychain (%s), saving to QSettings fallback",
-                     qPrintable(job->errorString()));
-            QSettings settings;
-            settings.setValue(m_settingsKey, key);
-        } else {
-            qCDebug(lcNetwork) << "Groq API key persisted into system keychain";
-            QSettings settings;
-            settings.remove(m_settingsKey);
-        }
-    });
-
-    writeJob->start();
-}
-
-void GroqApiClient::deleteApiKeyFromKeychain() {
-    QSettings settings;
-    settings.remove(m_settingsKey);
-
-    auto* deleteJob = new QKeychain::DeletePasswordJob(m_keychainService, this);
-    deleteJob->setKey(m_keychainKey);
-    deleteJob->setAutoDelete(true);
-
-    connect(deleteJob, &QKeychain::DeletePasswordJob::finished, this, [](QKeychain::Job* job) {
-        if (job->error() && job->error() != QKeychain::EntryNotFound) {
-            qWarning("GroqApiClient: Failed to delete API key from keychain: %s", qPrintable(job->errorString()));
-        } else {
-            qCDebug(lcNetwork) << "Groq API key deleted from system keychain";
-        }
-    });
-
-    deleteJob->start();
+    return postJson(u"chat/completions"_s, rootObj, u"Quota Check"_s, u"openai/gpt-oss-20b"_s, std::move(callback));
 }

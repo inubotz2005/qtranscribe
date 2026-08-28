@@ -52,7 +52,7 @@ bool ModelDownloader::startDownload(const QString& modelId, const QString& model
     emit isDownloadingAnyChanged();
     emit downloadProgressChanged(modelId, 0.0, 0, expectedSizeBytes, QString());
 
-    QNetworkRequest request{QUrl(downloadUrl)};
+    QNetworkRequest request {QUrl(downloadUrl)};
     request.setAttribute(QNetworkRequest::RedirectPolicyAttribute, QNetworkRequest::NoLessSafeRedirectPolicy);
     QHttpHeaders headers;
     headers.append(QHttpHeaders::WellKnownHeader::UserAgent, u"QTranscribe/1.0 (Linux; Wayland)"_s);
@@ -138,9 +138,8 @@ void ModelDownloader::onDownloadReadyRead() {
     if (m_expectedSizeBytes > 0 && (currentSize + chunk.size() > m_expectedSizeBytes)) {
         m_downloadAbortReason = tr("Download for %1 exceeded catalogued size of %2.")
                                     .arg(m_downloadingModelName, formatBytes(m_expectedSizeBytes));
-        qCWarning(lcSpeech) << "ModelDownloader: Download for" << m_downloadingModelId
-                            << "exceeded catalogued size (" << (currentSize + chunk.size()) << ">"
-                            << m_expectedSizeBytes << "bytes). Aborting.";
+        qCWarning(lcSpeech) << "ModelDownloader: Download for" << m_downloadingModelId << "exceeded catalogued size ("
+                            << (currentSize + chunk.size()) << ">" << m_expectedSizeBytes << "bytes). Aborting.";
         setLastError(m_downloadAbortReason);
         m_currentReply->abort();
         return;

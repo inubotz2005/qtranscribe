@@ -12,10 +12,11 @@
 #include <QQmlEngine>
 #include <QString>
 #include <QUrl>
-#include <qt6keychain/keychain.h>
 
 #include <chrono>
 #include <functional>
+
+class ApiKeyStore;
 
 class GroqApiClient : public QObject {
     Q_OBJECT
@@ -30,6 +31,9 @@ public:
 
     explicit GroqApiClient(QObject* parent = nullptr);
     ~GroqApiClient() override = default;
+
+    void setKeyStore(ApiKeyStore* keyStore);
+    ApiKeyStore* keyStore() const;
 
     QString apiKey() const;
     void setApiKey(const QString& key);
@@ -51,6 +55,8 @@ public:
     QNetworkReply* postMultipart(const QString& relativePath, QHttpMultiPart* multiPart, const QString& endpointLabel,
                                  const QString& modelName, ResponseCallback callback);
 
+    QNetworkReply* ping(ResponseCallback callback);
+
     static QString userAgent();
 
     static constexpr auto kDefaultTransferTimeout = std::chrono::seconds(15);
@@ -64,22 +70,9 @@ signals:
 
 private:
     void updateFactoryAuth();
-    void loadApiKeyFromKeychain();
-    void loadApiKeyFromSettingsFallback();
-    void saveApiKeyToKeychain(const QString& key);
-    void deleteApiKeyFromKeychain();
 
     QNetworkAccessManager* m_nam = nullptr;
     QNetworkRequestFactory m_requestFactory;
-    QString m_apiKey;
-    bool m_apiKeyLoaded = false;
-    bool m_isLoadingApiKey = false;
-
-    inline static constexpr QStringView kKeychainService = u"QTranscribe";
-    inline static constexpr QStringView kKeychainKey = u"groq_api_key";
-    inline static constexpr QStringView kSettingsApiKey = u"Groq/ApiKey";
-
-    QString m_keychainService = kKeychainService.toString();
-    QString m_keychainKey = kKeychainKey.toString();
-    QString m_settingsKey = kSettingsApiKey.toString();
+    ApiKeyStore* m_keyStore = nullptr;
+    bool m_ownsKeyStore = false;
 };

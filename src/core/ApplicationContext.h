@@ -3,6 +3,7 @@
 #include <QObject>
 
 class AudioRecorder;
+class ApiKeyStore;
 class DBusService;
 class DictationCoordinator;
 class GlobalShortcutManager;
@@ -30,6 +31,7 @@ public:
 
     [[nodiscard]] DictationCoordinator* dictationCoordinator() const noexcept;
     [[nodiscard]] GroqApiClient* groqApiClient() const noexcept;
+    [[nodiscard]] ApiKeyStore* apiKeyStore() const noexcept;
     [[nodiscard]] GroqSttClient* groqSttClient() const noexcept;
     [[nodiscard]] WhisperSttClient* whisperSttClient() const noexcept;
     [[nodiscard]] WhisperModelManager* whisperModelManager() const noexcept;

@@ -11,6 +11,7 @@
 #include "TextInjectorClient.h"
 #include "TranscriptionModel.h"
 
+#include "ApiKeyStore.h"
 #include "GlobalShortcutManager.h"
 #include "StatusNotifierService.h"
 #include "WhisperModelManager.h"
@@ -113,6 +114,10 @@ DictationCoordinator* ApplicationContext::dictationCoordinator() const noexcept 
 
 GroqApiClient* ApplicationContext::groqApiClient() const noexcept {
     return m_apiClient;
+}
+
+ApiKeyStore* ApplicationContext::apiKeyStore() const noexcept {
+    return m_apiClient ? m_apiClient->keyStore() : nullptr;
 }
 
 GroqSttClient* ApplicationContext::groqSttClient() const noexcept {

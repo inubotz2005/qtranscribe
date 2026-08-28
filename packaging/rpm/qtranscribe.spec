@@ -1,7 +1,7 @@
 %global debug_package %{nil}
 
 Name:           qtranscribe
-Version:        %{?version}%{!?version:1.2.0}
+Version:        %{?version}%{!?version:1.3.0}
 Release:        %{?release}%{!?release:1}%{?dist}
 Summary:        Fast and modern speech-to-text desktop application
 
@@ -71,6 +71,9 @@ QT_QPA_PLATFORM=offscreen %ctest
 %{_datadir}/icons/hicolor/*/apps/qtranscribe.png
 
 %changelog
+* Fri Aug 28 2026 QTranscribe Developers <support@qtranscribe.org> - 1.3.0-1
+- Release v1.3.0
+
 * Thu Aug 27 2026 QTranscribe Developers <support@qtranscribe.org> - 1.2.0-1
 - Release v1.2.0
 

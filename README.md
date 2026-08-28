@@ -280,8 +280,8 @@ Docker build scripts live in [`packaging/`](packaging/):
 <summary><strong>Debian and Ubuntu (.deb)</strong></summary>
 
 ```bash
-./packaging/deb/build-deb.sh 24.04 1.2.0
-sudo apt install ./dist/deb/qtranscribe_1.2.0_amd64.deb
+./packaging/deb/build-deb.sh 24.04 1.3.0
+sudo apt install ./dist/deb/qtranscribe_1.3.0_amd64.deb
 ```
 </details>
 
@@ -289,8 +289,8 @@ sudo apt install ./dist/deb/qtranscribe_1.2.0_amd64.deb
 <summary><strong>Fedora and RHEL RPM (.rpm)</strong></summary>
 
 ```bash
-./packaging/rpm/build-rpm.sh 44 1.2.0 1
-sudo dnf install ./dist/rpm/qtranscribe-1.2.0-1.fc44.x86_64.rpm
+./packaging/rpm/build-rpm.sh 44 1.3.0 1
+sudo dnf install ./dist/rpm/qtranscribe-1.3.0-1.fc44.x86_64.rpm
 ```
 </details>
 
@@ -298,7 +298,7 @@ sudo dnf install ./dist/rpm/qtranscribe-1.2.0-1.fc44.x86_64.rpm
 <summary><strong>Arch Linux (.pkg.tar.zst)</strong></summary>
 
 ```bash
-./packaging/arch/build-arch.sh 1.2.0 1
-sudo pacman -U ./dist/arch/qtranscribe-1.2.0-1-x86_64.pkg.tar.zst
+./packaging/arch/build-arch.sh 1.3.0 1
+sudo pacman -U ./dist/arch/qtranscribe-1.3.0-1-x86_64.pkg.tar.zst
 ```
 </details>

@@ -125,7 +125,7 @@ Item {
                             }
 
                             StateBadge {
-                                text: Qt.application.version ? "v" + Qt.application.version : "v1.2.0"
+                                text: Qt.application.version ? "v" + Qt.application.version : "v1.3.0"
                                 statusType: "accent"
                             }
 

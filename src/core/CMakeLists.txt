@@ -3,8 +3,12 @@ add_library(qtranscribe_core STATIC
     ApplicationContext.cpp
     AbstractSttClient.h
     AbstractSttClient.cpp
+    AudioFeedbackPlayer.h
+    AudioFeedbackPlayer.cpp
     AudioRecorder.h
     AudioRecorder.cpp
+    DictationPadModel.h
+    DictationPadModel.cpp
     GlobalShortcutManager.h
     GlobalShortcutManager.cpp
     GroqApiClient.h
@@ -31,6 +35,8 @@ add_library(qtranscribe_core STATIC
     ClipboardManager.cpp
     DaemonConnector.h
     DaemonConnector.cpp
+    SystemHealthMonitor.h
+    SystemHealthMonitor.cpp
     TextInjectorClient.h
     TextInjectorClient.cpp
     DictationCoordinator.h

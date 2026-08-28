@@ -8,11 +8,13 @@
 #include <QQmlEngine>
 #include <QString>
 
+class AudioFeedbackPlayer;
 class AudioRecorder;
+class DictationPadModel;
 class GlobalShortcutManager;
 class GroqApiClient;
 class GroqLlmClient;
-class QSoundEffect;
+class SystemHealthMonitor;
 class TextInjectorClient;
 class TranscriptionModel;
 
@@ -104,6 +106,9 @@ public:
     int dictationCharCount() const;
 
     AbstractSttClient* activeSttClient() const;
+    DictationPadModel* dictationPadModel() const;
+    AudioFeedbackPlayer* audioFeedbackPlayer() const;
+    SystemHealthMonitor* systemHealthMonitor() const;
 
 public slots:
     void initialize();
@@ -166,7 +171,6 @@ private:
     void setLastError(const QString& error);
     void completeTranscription(const QString& text);
     void finishTranscriptionAndInject(const QString& text);
-    static int calculateWordCount(const QString& text);
 
     AudioRecorder* m_recorder = nullptr;
     QHash<TranscriptionBackend, AbstractSttClient*> m_sttClients;
@@ -175,8 +179,10 @@ private:
     GlobalShortcutManager* m_shortcutMgr = nullptr;
     TextInjectorClient* m_injector = nullptr;
     TranscriptionModel* m_historyModel = nullptr;
-    QSoundEffect* m_startChime = nullptr;
-    QSoundEffect* m_stopChime = nullptr;
+
+    DictationPadModel* m_padModel = nullptr;
+    AudioFeedbackPlayer* m_feedbackPlayer = nullptr;
+    SystemHealthMonitor* m_healthMonitor = nullptr;
 
     TranscriptionBackend m_activeBackend = TranscriptionBackend::WhisperCpp;
     DictationState m_state = DictationState::Idle;
@@ -185,9 +191,7 @@ private:
     QString m_lastError;
     QString m_lastTranscription;
     QByteArray m_lastWavData;
-    QString m_dictationPadText;
 
-    bool m_soundEnabled = true;
     bool m_initialized = false;
 
     friend class TestDictationCoordinator;

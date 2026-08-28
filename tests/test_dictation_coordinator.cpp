@@ -4,11 +4,14 @@
 #include <QTest>
 
 #include "AbstractSttClient.h"
+#include "AudioFeedbackPlayer.h"
 #include "AudioRecorder.h"
 #include "DictationCoordinator.h"
+#include "DictationPadModel.h"
 #include "GlobalShortcutManager.h"
 #include "GroqApiClient.h"
 #include "GroqLlmClient.h"
+#include "SystemHealthMonitor.h"
 #include "TextInjectorClient.h"
 #include "TranscriptionModel.h"
 
@@ -123,6 +126,10 @@ public:
         setSupported(supported);
     }
 
+    void setMockAvailable(bool available) {
+        setAvailable(available);
+    }
+
     void triggerShortcutActivated(const QString& id) {
         emit shortcutActivated(id);
     }
@@ -154,6 +161,9 @@ private slots:
     void testShortcutPushToTalkMode();
     void testPushToTalkUnsupportedFallback();
     void testDictationPadOperations();
+    void testDictationPadModelDirect();
+    void testAudioFeedbackPlayerDirect();
+    void testSystemHealthMonitorDirect();
 
 private:
     DictationCoordinator* m_coordinator = nullptr;
@@ -223,6 +233,9 @@ void TestDictationCoordinator::testInitialState() {
     QVERIFY(m_coordinator->lastError().isEmpty());
     QVERIFY(m_coordinator->lastTranscription().isEmpty());
     QVERIFY(m_coordinator->dictationPadText().isEmpty());
+    QVERIFY(m_coordinator->dictationPadModel() != nullptr);
+    QVERIFY(m_coordinator->audioFeedbackPlayer() != nullptr);
+    QVERIFY(m_coordinator->systemHealthMonitor() != nullptr);
 }
 
 void TestDictationCoordinator::testBackendRegistrationAndSwitching() {
@@ -399,6 +412,62 @@ void TestDictationCoordinator::testDictationPadOperations() {
     QCOMPARE(m_coordinator->dictationPadText(), u""_s);
     QCOMPARE(m_coordinator->dictationWordCount(), 0);
     QCOMPARE(m_coordinator->dictationCharCount(), 0);
+}
+
+void TestDictationCoordinator::testDictationPadModelDirect() {
+    DictationPadModel model;
+    QSignalSpy spy(&model, &DictationPadModel::textChanged);
+
+    model.setText(u"First line"_s);
+    QCOMPARE(spy.count(), 1);
+    QCOMPARE(model.wordCount(), 2);
+    QCOMPARE(model.charCount(), 10);
+
+    model.append(u"Second line"_s);
+    QCOMPARE(spy.count(), 2);
+    QCOMPARE(model.text(), u"First line\nSecond line"_s);
+    QCOMPARE(model.wordCount(), 4);
+
+    model.clear();
+    QCOMPARE(spy.count(), 3);
+    QCOMPARE(model.text(), u""_s);
+    QCOMPARE(model.wordCount(), 0);
+    QCOMPARE(model.charCount(), 0);
+}
+
+void TestDictationCoordinator::testAudioFeedbackPlayerDirect() {
+    AudioFeedbackPlayer player;
+    QSignalSpy soundSpy(&player, &AudioFeedbackPlayer::soundEnabledChanged);
+
+    player.setSoundEnabled(false);
+    QCOMPARE(soundSpy.count(), 1);
+    QVERIFY(!player.soundEnabled());
+
+    player.setSoundEnabled(true);
+    QCOMPARE(soundSpy.count(), 2);
+    QVERIFY(player.soundEnabled());
+}
+
+void TestDictationCoordinator::testSystemHealthMonitorDirect() {
+    SystemHealthMonitor monitor;
+    QSignalSpy healthSpy(&monitor, &SystemHealthMonitor::systemHealthChanged);
+    QSignalSpy canRecordSpy(&monitor, &SystemHealthMonitor::canRecordChanged);
+
+    monitor.setShortcutManager(m_shortcutMgr);
+    QVERIFY(healthSpy.count() >= 1);
+    QVERIFY(monitor.systemShortcutSupported());
+    QVERIFY(!monitor.systemShortcutHasIssue());
+
+    m_shortcutMgr->setMockAvailable(false);
+    QVERIFY(monitor.systemShortcutHasIssue());
+
+    monitor.setAudioRecorder(m_recorder);
+    monitor.setActiveSttClient(m_whisperClient);
+    QVERIFY(monitor.canRecord(true));
+    QVERIFY(!monitor.canRecord(false));
+
+    m_recorder->setMockHasAudioInputDevice(false);
+    QVERIFY(!monitor.canRecord(true));
 }
 
 int main(int argc, char* argv[]) {

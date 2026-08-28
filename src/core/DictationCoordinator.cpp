@@ -7,30 +7,30 @@
 #include "TextInjectorClient.h"
 #include "TranscriptionModel.h"
 
+#include "AudioFeedbackPlayer.h"
+#include "DictationPadModel.h"
 #include "GlobalShortcutManager.h"
+#include "SystemHealthMonitor.h"
 
-#include <QClipboard>
 #include <QDebug>
 #include <QGuiApplication>
 #include <QSettings>
-#include <QSoundEffect>
-#include <QStringTokenizer>
-#include <QUrl>
 
 using namespace Qt::StringLiterals;
 
 DictationCoordinator::DictationCoordinator(QObject* parent)
     : QObject(parent)
-    , m_startChime(new QSoundEffect(this))
-    , m_stopChime(new QSoundEffect(this)) {
-    m_startChime->setSource(QUrl(u"qrc:/qt/qml/QTranscribe/assets/chime_start.wav"_s));
-    m_startChime->setVolume(0.8f);
-
-    m_stopChime->setSource(QUrl(u"qrc:/qt/qml/QTranscribe/assets/chime_stop.wav"_s));
-    m_stopChime->setVolume(0.8f);
+    , m_padModel(new DictationPadModel(this))
+    , m_feedbackPlayer(new AudioFeedbackPlayer(this))
+    , m_healthMonitor(new SystemHealthMonitor(this)) {
+    connect(m_padModel, &DictationPadModel::textChanged, this, &DictationCoordinator::dictationPadTextChanged);
+    connect(m_feedbackPlayer, &AudioFeedbackPlayer::soundEnabledChanged, this,
+            &DictationCoordinator::soundEnabledChanged);
+    connect(m_healthMonitor, &SystemHealthMonitor::systemHealthChanged, this,
+            &DictationCoordinator::systemHealthChanged);
+    connect(m_healthMonitor, &SystemHealthMonitor::canRecordChanged, this, &DictationCoordinator::canRecordChanged);
 
     QSettings settings;
-    m_soundEnabled = settings.value(u"Audio/SoundEnabled"_s, true).toBool();
     const QString modeStr = settings.value(u"Speech/RecordingMode"_s, u"Toggle"_s).toString();
     if (modeStr == u"PushToTalk"_s) {
         m_recordingMode = RecordingMode::PushToTalk;
@@ -59,18 +59,15 @@ void DictationCoordinator::setAudioRecorder(AudioRecorder* recorder) {
     if (m_recorder) {
         disconnect(m_recorder, &AudioRecorder::recordingFinished, this, &DictationCoordinator::onRecordingFinished);
         disconnect(m_recorder, &AudioRecorder::maxDurationReached, this, &DictationCoordinator::onMaxDurationReached);
-        disconnect(m_recorder, &AudioRecorder::hasAudioInputDeviceChanged, this,
-                   &DictationCoordinator::updateCoordinatorHealth);
         disconnect(m_recorder, &AudioRecorder::audioLevelChanged, this, nullptr);
     }
 
     m_recorder = recorder;
+    m_healthMonitor->setAudioRecorder(m_recorder);
 
     if (m_recorder) {
         connect(m_recorder, &AudioRecorder::recordingFinished, this, &DictationCoordinator::onRecordingFinished);
         connect(m_recorder, &AudioRecorder::maxDurationReached, this, &DictationCoordinator::onMaxDurationReached);
-        connect(m_recorder, &AudioRecorder::hasAudioInputDeviceChanged, this,
-                &DictationCoordinator::updateCoordinatorHealth);
         connect(m_recorder, &AudioRecorder::audioLevelChanged, this, [this]() {
             if (m_recorder) {
                 emit audioLevelChanged(m_recorder->audioLevel());
@@ -90,16 +87,12 @@ void DictationCoordinator::registerBackend(TranscriptionBackend backend, Abstrac
         auto* old = m_sttClients[backend];
         disconnect(old, &AbstractSttClient::transcriptionReady, this, &DictationCoordinator::onSttTranscriptionReady);
         disconnect(old, &AbstractSttClient::errorOccurred, this, &DictationCoordinator::onSttError);
-        disconnect(old, &AbstractSttClient::readyChanged, this, &DictationCoordinator::updateCoordinatorHealth);
-        disconnect(old, &AbstractSttClient::busyChanged, this, &DictationCoordinator::updateCoordinatorHealth);
     }
 
     if (client) {
         m_sttClients.insert(backend, client);
         connect(client, &AbstractSttClient::transcriptionReady, this, &DictationCoordinator::onSttTranscriptionReady);
         connect(client, &AbstractSttClient::errorOccurred, this, &DictationCoordinator::onSttError);
-        connect(client, &AbstractSttClient::readyChanged, this, &DictationCoordinator::updateCoordinatorHealth);
-        connect(client, &AbstractSttClient::busyChanged, this, &DictationCoordinator::updateCoordinatorHealth);
 
         if (backend == m_activeBackend && m_initialized) {
             client->activate();
@@ -108,6 +101,7 @@ void DictationCoordinator::registerBackend(TranscriptionBackend backend, Abstrac
         m_sttClients.remove(backend);
     }
 
+    m_healthMonitor->setActiveSttClient(activeSttClient());
     updateCoordinatorHealth();
 }
 
@@ -152,25 +146,15 @@ void DictationCoordinator::setShortcutManager(GlobalShortcutManager* mgr) {
                    &DictationCoordinator::onShortcutActivated);
         disconnect(m_shortcutMgr, &GlobalShortcutManager::shortcutDeactivated, this,
                    &DictationCoordinator::onShortcutDeactivated);
-        disconnect(m_shortcutMgr, &GlobalShortcutManager::availableChanged, this,
-                   &DictationCoordinator::updateCoordinatorHealth);
-        disconnect(m_shortcutMgr, &GlobalShortcutManager::supportedChanged, this,
-                   &DictationCoordinator::updateCoordinatorHealth);
-        disconnect(m_shortcutMgr, &GlobalShortcutManager::statusMessageChanged, this,
-                   &DictationCoordinator::updateCoordinatorHealth);
     }
     m_shortcutMgr = mgr;
+    m_healthMonitor->setShortcutManager(m_shortcutMgr);
+
     if (m_shortcutMgr) {
         connect(m_shortcutMgr, &GlobalShortcutManager::shortcutActivated, this,
                 &DictationCoordinator::onShortcutActivated);
         connect(m_shortcutMgr, &GlobalShortcutManager::shortcutDeactivated, this,
                 &DictationCoordinator::onShortcutDeactivated);
-        connect(m_shortcutMgr, &GlobalShortcutManager::availableChanged, this,
-                &DictationCoordinator::updateCoordinatorHealth);
-        connect(m_shortcutMgr, &GlobalShortcutManager::supportedChanged, this,
-                &DictationCoordinator::updateCoordinatorHealth);
-        connect(m_shortcutMgr, &GlobalShortcutManager::statusMessageChanged, this,
-                &DictationCoordinator::updateCoordinatorHealth);
     }
     updateCoordinatorHealth();
 }
@@ -179,23 +163,8 @@ void DictationCoordinator::setTextInjector(TextInjectorClient* injector) {
     if (m_injector == injector) {
         return;
     }
-    if (m_injector) {
-        disconnect(m_injector, &TextInjectorClient::connectedChanged, this,
-                   &DictationCoordinator::updateCoordinatorHealth);
-        disconnect(m_injector, &TextInjectorClient::hasFatalErrorChanged, this,
-                   &DictationCoordinator::updateCoordinatorHealth);
-        disconnect(m_injector, &TextInjectorClient::fatalErrorMessageChanged, this,
-                   &DictationCoordinator::updateCoordinatorHealth);
-    }
     m_injector = injector;
-    if (m_injector) {
-        connect(m_injector, &TextInjectorClient::connectedChanged, this,
-                &DictationCoordinator::updateCoordinatorHealth);
-        connect(m_injector, &TextInjectorClient::hasFatalErrorChanged, this,
-                &DictationCoordinator::updateCoordinatorHealth);
-        connect(m_injector, &TextInjectorClient::fatalErrorMessageChanged, this,
-                &DictationCoordinator::updateCoordinatorHealth);
-    }
+    m_healthMonitor->setTextInjector(m_injector);
     updateCoordinatorHealth();
 }
 
@@ -225,6 +194,7 @@ void DictationCoordinator::setActiveBackend(TranscriptionBackend backend) {
             newClient->activate();
         }
 
+        m_healthMonitor->setActiveSttClient(activeSttClient());
         emit activeBackendChanged();
         updateCoordinatorHealth();
     }
@@ -251,7 +221,7 @@ void DictationCoordinator::setRecordingMode(RecordingMode mode) {
 }
 
 bool DictationCoordinator::pushToTalkSupported() const {
-    return m_shortcutMgr && m_shortcutMgr->isSupported();
+    return m_healthMonitor ? m_healthMonitor->pushToTalkSupported() : false;
 }
 
 void DictationCoordinator::initialize() {
@@ -288,10 +258,8 @@ bool DictationCoordinator::isBusy() const {
 }
 
 bool DictationCoordinator::canRecord() const {
-    const bool micReady = m_recorder && m_recorder->hasAudioInputDevice();
     const bool notProcessing = (m_state != DictationState::Transcribing && m_state != DictationState::Enhancing);
-    const bool sttReady = activeSttClient() && activeSttClient()->isReady();
-    return micReady && notProcessing && sttReady;
+    return m_healthMonitor ? m_healthMonitor->canRecord(notProcessing) : false;
 }
 
 qreal DictationCoordinator::audioLevel() const {
@@ -323,121 +291,97 @@ QString DictationCoordinator::lastTranscription() const {
 }
 
 bool DictationCoordinator::soundEnabled() const {
-    return m_soundEnabled;
+    return m_feedbackPlayer ? m_feedbackPlayer->soundEnabled() : true;
 }
 
 void DictationCoordinator::setSoundEnabled(bool enabled) {
-    if (m_soundEnabled != enabled) {
-        m_soundEnabled = enabled;
-        QSettings settings;
-        settings.setValue(u"Audio/SoundEnabled"_s, m_soundEnabled);
-        emit soundEnabledChanged();
+    if (m_feedbackPlayer) {
+        m_feedbackPlayer->setSoundEnabled(enabled);
     }
 }
 
 bool DictationCoordinator::systemShortcutHasIssue() const {
-    return m_shortcutMgr && !m_shortcutMgr->isAvailable();
+    return m_healthMonitor ? m_healthMonitor->systemShortcutHasIssue() : false;
 }
 
 bool DictationCoordinator::systemShortcutSupported() const {
-    return m_shortcutMgr && m_shortcutMgr->isSupported();
+    return m_healthMonitor ? m_healthMonitor->systemShortcutSupported() : false;
 }
 
 QString DictationCoordinator::systemShortcutStatus() const {
-    return m_shortcutMgr ? m_shortcutMgr->statusMessage() : QString();
+    return m_healthMonitor ? m_healthMonitor->systemShortcutStatus() : QString();
 }
 
 bool DictationCoordinator::directTypingHasIssue() const {
-    return m_injector && (!m_injector->isConnected() || m_injector->hasFatalError());
+    return m_healthMonitor ? m_healthMonitor->directTypingHasIssue() : false;
 }
 
 bool DictationCoordinator::directTypingConnected() const {
-    return m_injector && m_injector->isConnected();
+    return m_healthMonitor ? m_healthMonitor->directTypingConnected() : false;
 }
 
 bool DictationCoordinator::directTypingFatalError() const {
-    return m_injector && m_injector->hasFatalError();
+    return m_healthMonitor ? m_healthMonitor->directTypingFatalError() : false;
 }
 
 QString DictationCoordinator::directTypingStatus() const {
-    if (!m_injector) {
-        return QString();
-    }
-    if (m_injector->hasFatalError()) {
-        return m_injector->fatalErrorMessage().isEmpty() ? tr("Direct Typing Error") : m_injector->fatalErrorMessage();
-    }
-    if (!m_injector->isConnected()) {
-        return tr("Clipboard Fallback");
-    }
-    return tr("Connected");
+    return m_healthMonitor ? m_healthMonitor->directTypingStatus() : QString();
 }
 
 QString DictationCoordinator::dictationPadText() const {
-    return m_dictationPadText;
+    return m_padModel ? m_padModel->text() : QString();
 }
 
 void DictationCoordinator::setDictationPadText(const QString& text) {
-    if (m_dictationPadText != text) {
-        m_dictationPadText = text;
-        emit dictationPadTextChanged();
+    if (m_padModel) {
+        m_padModel->setText(text);
     }
 }
 
 int DictationCoordinator::dictationWordCount() const {
-    return calculateWordCount(m_dictationPadText);
+    return m_padModel ? m_padModel->wordCount() : 0;
 }
 
 int DictationCoordinator::dictationCharCount() const {
-    return m_dictationPadText.length();
+    return m_padModel ? m_padModel->charCount() : 0;
 }
 
 void DictationCoordinator::appendDictationPadText(const QString& text) {
-    if (text.isEmpty()) {
-        return;
+    if (m_padModel) {
+        m_padModel->append(text);
     }
-    if (m_dictationPadText.isEmpty()) {
-        m_dictationPadText = text;
-    } else {
-        m_dictationPadText += u"\n"_s + text;
-    }
-    emit dictationPadTextChanged();
 }
 
 void DictationCoordinator::clearDictationPad() {
-    if (!m_dictationPadText.isEmpty()) {
-        m_dictationPadText.clear();
-        emit dictationPadTextChanged();
+    if (m_padModel) {
+        m_padModel->clear();
     }
 }
 
 void DictationCoordinator::copyDictationPad() {
-    if (!m_dictationPadText.isEmpty()) {
-        copyToClipboard(m_dictationPadText);
+    if (m_padModel) {
+        m_padModel->copyToClipboard();
     }
 }
 
 void DictationCoordinator::copyToClipboard(const QString& text) {
-    if (QClipboard* clipboard = QGuiApplication::clipboard()) {
-        clipboard->setText(text);
-    }
-}
-
-int DictationCoordinator::calculateWordCount(const QString& text) {
-    int words = 0;
-    bool inWord = false;
-    for (const QChar ch : text) {
-        if (ch.isSpace()) {
-            inWord = false;
-        } else if (!inWord) {
-            inWord = true;
-            ++words;
-        }
-    }
-    return words;
+    DictationPadModel::copyTextToClipboard(text);
 }
 
 AbstractSttClient* DictationCoordinator::activeSttClient() const {
     return m_sttClients.value(m_activeBackend, nullptr);
+}
+
+DictationPadModel* DictationCoordinator::dictationPadModel() const {
+    return m_padModel;
+}
+
+AudioFeedbackPlayer* DictationCoordinator::audioFeedbackPlayer() const {
+    return m_feedbackPlayer;
+}
+
+SystemHealthMonitor* DictationCoordinator::systemHealthMonitor() const {
+    return m_healthMonitor;
 }
 
 void DictationCoordinator::showWindow() {
@@ -468,8 +412,8 @@ void DictationCoordinator::startRecording() {
         return;
     }
 
-    if (m_soundEnabled && m_startChime) {
-        m_startChime->play();
+    if (m_feedbackPlayer) {
+        m_feedbackPlayer->playStartSound();
     }
 
     setLastError({});
@@ -484,8 +428,8 @@ void DictationCoordinator::stopRecording() {
         return;
     }
 
-    if (m_soundEnabled && m_stopChime) {
-        m_stopChime->play();
+    if (m_feedbackPlayer) {
+        m_feedbackPlayer->playStopSound();
     }
 
     if (m_recorder) {
@@ -567,14 +511,14 @@ void DictationCoordinator::clearError() {
 }
 
 void DictationCoordinator::playStartSound() {
-    if (m_startChime) {
-        m_startChime->play();
+    if (m_feedbackPlayer) {
+        m_feedbackPlayer->playStartSound();
     }
 }
 
 void DictationCoordinator::playStopSound() {
-    if (m_stopChime) {
-        m_stopChime->play();
+    if (m_feedbackPlayer) {
+        m_feedbackPlayer->playStopSound();
     }
 }
 

